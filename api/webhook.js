@@ -1,12 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
 );
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -24,12 +24,13 @@ export default async function handler(req, res) {
   // Intent + slot analysis
   let analysis = { intent: 'BILGI', lead_score: 30, summary: '', slots: {} };
   try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: `Emlak ofisi çağrı transkriptini analiz et. Sadece JSON döndür:
+    const completion = await anthropic.messages.create({
+  model: 'claude-haiku-4-5-20251001',
+  max_tokens: 500,
+  messages: [
+    {
+      role: 'user',
+      content: `Emlak ofisi çağrı transkriptini analiz et. Sadece JSON döndür:
 {
   "intent": "SATIN_ALMA|KIRA|SATIS|BILGI",
   "lead_score": 0-100,
@@ -40,16 +41,15 @@ export default async function handler(req, res) {
     "budget": null,
     "appointment_requested": false
   }
-}`
-        },
-        { role: 'user', content: `Transkript:\n${transcript}` }
-      ],
-      response_format: { type: 'json_object' }
-    });
-    analysis = JSON.parse(completion.choices[0].message.content);
-  } catch (e) {
-    console.log('OpenAI error:', e.message);
-  }
+}
+
+Transkript:
+${transcript}`
+    }
+  ]
+});
+    
+analysis = JSON.parse(completion.content[0].text);
 
   // Supabase'e kaydet
   await supabase.from('calls').insert({
