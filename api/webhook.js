@@ -1,15 +1,19 @@
-// Vercel'e deploy et
 export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(200).json({ status: 'VoiceEstate webhook aktif' });
+  }
+
   const { message } = req.body;
-  if (message?.type !== 'end-of-call-report') 
-    return res.json({ ok: true });
-  
-  // Transkripti Supabase'e kaydet
-  await supabase.from('calls').insert({
-    caller_phone: message.call.customer.number,
+
+  if (!message || message.type !== 'end-of-call-report') {
+    return res.status(200).json({ received: true });
+  }
+
+  console.log('Çağrı bitti:', {
+    duration: message.durationSeconds,
+    caller: message.call?.customer?.number,
     transcript: message.transcript,
-    duration_seconds: message.durationSeconds,
   });
-  
-  res.json({ success: true });
+
+  return res.status(200).json({ success: true });
 }
