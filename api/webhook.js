@@ -10,20 +10,21 @@ export default async function handler(req, res) {
     return res.status(200).json({ status: 'VoiceEstate webhook aktif' });
   }
 
-  const body = req.body;
-  console.log('GELEN DATA:', JSON.stringify(body, null, 2));
+  const msg = req.body?.message;
+  if (!msg || msg.type !== 'end-of-call-report') {
+    return res.status(200).json({ received: true });
+  }
 
-  const messageType = body?.message?.type;
-  console.log('MESSAGE TYPE:', messageType);
-
-  // Her POST'u kaydet, filtre yok
-  await supabase.from('calls').insert({
-    caller_phone: body?.message?.call?.customer?.number || 'test',
-    duration_seconds: body?.message?.durationSeconds || 0,
-    transcript: body?.message?.transcript || [],
-    summary: body?.message?.summary || '',
+  const { data, error } = await supabase.from('calls').insert({
+    caller_phone: msg.call?.customer?.number || 'web-test',
+    duration_seconds: Math.round(msg.durationSeconds || 0),
+    transcript: msg.artifact?.messages || [],
+    summary: msg.artifact?.transcript || '',
     created_at: new Date().toISOString(),
   });
 
-  return res.status(200).json({ success: true, type: messageType });
+  console.log('INSERT DATA:', JSON.stringify(data));
+  console.log('INSERT ERROR:', JSON.stringify(error));
+
+  return res.status(200).json({ success: true });
 }
