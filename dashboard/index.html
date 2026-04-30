@@ -1,176 +1,279 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>VoiceEstate Dashboard</title>
+import { createClient } from '@supabase/supabase-js';
+import Anthropic from '@anthropic-ai/sdk';
 
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet"/>
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
 
-<style>
-body { margin:0; font-family:'DM Sans',sans-serif; background:#0b0b12; color:#eee; }
-.sidebar { width:200px; background:#111; height:100vh; position:fixed; padding:20px; }
-.nav-item { margin:10px 0; cursor:pointer; color:#aaa; }
-.nav-item.active { color:#fff; font-weight:bold; }
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
 
-.main { margin-left:200px; padding:20px; }
-
-.card { background:#151523; padding:16px; border-radius:10px; margin-bottom:20px; }
-
-table { width:100%; border-collapse:collapse; }
-th, td { padding:10px; border-bottom:1px solid #222; font-size:13px; }
-th { color:#777; text-align:left; }
-
-.badge { padding:4px 8px; border-radius:6px; font-size:11px; }
-
-.green { background:#1f4; color:#000; }
-.blue { background:#49f; }
-.red { background:#f55; }
-.gold { background:#c8a84b; color:#000; }
-</style>
-</head>
-
-<body>
-
-<div class="sidebar">
-  <h2>VoiceEstate</h2>
-  <div class="nav-item active" onclick="setPage('dashboard', this)">Dashboard</div>
-  <div class="nav-item" onclick="setPage('calls', this)">Çağrılar</div>
-  <div class="nav-item" onclick="setPage('appointments', this)">Randevular</div>
-</div>
-
-<div class="main" id="main"></div>
-
-<script>
-
-let SUPABASE_URL = '';
-let SUPABASE_KEY = '';
-
-let calls = [];
-let appointments = [];
-
-let currentPage = 'dashboard';
-
-async function connect() {
-  SUPABASE_URL = prompt("Supabase URL");
-  SUPABASE_KEY = prompt("Supabase KEY");
-
-  await loadAll();
+function safeJsonParse(text) {
+  try {
+    return JSON.parse(text);
+  } catch {
+    const match = text?.match(/\{[\s\S]*\}/);
+    if (!match) return null;
+    try {
+      return JSON.parse(match[0]);
+    } catch {
+      return null;
+    }
+  }
 }
 
-async function loadAll() {
-  await loadCalls();
-  await loadAppointments();
-  render();
+function messagesToPlainText(messages, fallbackTranscript = '') {
+  if (fallbackTranscript) return fallbackTranscript;
+  if (!Array.isArray(messages)) return '';
+
+  return messages
+    .filter((m) => m.role !== 'system')
+    .map((m) => {
+      const role = m.role === 'bot' ? 'AI' : 'User';
+      return `${role}: ${m.message || m.content || ''}`;
+    })
+    .join('\n');
 }
 
-async function loadCalls() {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/calls?select=*&order=created_at.desc`, {
-    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+function temperatureFromScore(score) {
+  if (score >= 75) return 'hot';
+  if (score >= 45) return 'warm';
+  return 'cold';
+}
+
+function normalizeAnalysis(raw) {
+  const score = Number(raw?.lead_score);
+
+  const cleanScore = Number.isFinite(score)
+    ? Math.max(0, Math.min(100, score))
+    : 30;
+
+  return {
+    caller_name: raw?.caller_name || null,
+    intent: raw?.intent || 'BILGI',
+    lead_score: cleanScore,
+    temperature: temperatureFromScore(cleanScore),
+    summary: raw?.summary || 'Çağrı kaydedildi, AI özeti üretilemedi.',
+    status:
+      raw?.status ||
+      (raw?.slots?.appointment_requested ? 'randevu_alindi' : 'bilgi_verildi'),
+    slots: {
+      district: raw?.slots?.district || null,
+      room_count: raw?.slots?.room_count || null,
+      budget: raw?.slots?.budget || null,
+      property_type: raw?.slots?.property_type || null,
+      appointment_requested: Boolean(raw?.slots?.appointment_requested),
+      preferred_time: raw?.slots?.preferred_time || null,
+      urgency: raw?.slots?.urgency || null,
+    },
+  };
+}
+
+async function upsertLead({ insertedCall, analysis }) {
+  const phone = insertedCall.caller_phone || 'web-test';
+
+  const { data: existing } = await supabase
+    .from('leads')
+    .select('*')
+    .eq('phone', phone)
+    .maybeSingle();
+
+  const payload = {
+    tenant_id: insertedCall.tenant_id || null,
+    phone,
+    name: analysis.caller_name || existing?.name || null,
+    intent: analysis.intent,
+    lead_score: analysis.lead_score,
+    temperature: analysis.temperature,
+    district: analysis.slots?.district,
+    room_count: analysis.slots?.room_count,
+    budget: analysis.slots?.budget,
+    property_type: analysis.slots?.property_type,
+    urgency: analysis.slots?.urgency,
+    appointment_requested: analysis.slots?.appointment_requested,
+    summary: analysis.summary,
+    status: analysis.temperature === 'hot' ? 'hot_lead' : 'new',
+    last_call_id: insertedCall.id,
+    last_call_at: insertedCall.created_at,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (existing) {
+    await supabase
+      .from('leads')
+      .update({
+        ...payload,
+        call_count: (existing.call_count || 1) + 1,
+      })
+      .eq('id', existing.id);
+  } else {
+    await supabase.from('leads').insert(payload);
+  }
+}
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(200).json({
+      status: 'VoiceEstate webhook aktif',
+      route: '/api/webhook',
+    });
+  }
+
+  const msg = req.body?.message;
+
+  if (!msg || msg.type !== 'end-of-call-report') {
+    return res.status(200).json({
+      received: true,
+      ignored: true,
+    });
+  }
+
+  const messages = msg.artifact?.messages || [];
+  const transcriptText = messagesToPlainText(
+    messages,
+    msg.artifact?.transcript || ''
+  );
+
+  let analysis = normalizeAnalysis(null);
+
+  try {
+    const todayTR = new Date().toLocaleDateString('tr-TR', {
+      timeZone: 'Europe/Istanbul',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+
+    const completion = await anthropic.messages.create({
+      model: 'claude-haiku-4-5',
+      max_tokens: 900,
+      messages: [
+        {
+          role: 'user',
+          content: `
+Sen bir emlak ofisi çağrı analiz motorusun.
+
+Sadece geçerli JSON döndür. Markdown, açıklama veya ek metin yazma.
+
+Bugünün tarihi: ${todayTR}
+Timezone: Europe/Istanbul
+
+JSON formatı:
+{
+  "caller_name": null,
+  "intent": "SATIN_ALMA | KIRA | SATIS | BILGI",
+  "lead_score": 0,
+  "summary": "1-2 cümle Türkçe özet",
+  "status": "randevu_alindi | bilgi_verildi | degerleme_talebi | takip_gerekli",
+  "slots": {
+    "district": null,
+    "room_count": null,
+    "budget": null,
+    "property_type": null,
+    "appointment_requested": false,
+    "preferred_time": null,
+    "urgency": null
+  }
+}
+
+Kurallar:
+- Ev almak istiyorsa intent SATIN_ALMA.
+- Kiralık arıyorsa intent KIRA.
+- Evini satmak istiyorsa intent SATIS.
+- Sadece soru soruyorsa intent BILGI.
+- Randevu, görüşme, ofise gelme, danışman arasın gibi ifade varsa appointment_requested true.
+- preferred_time varsa ISO formatında döndür: YYYY-MM-DDTHH:mm:ss+03:00
+- "yarın 14:30" gibi ifadeleri bugünün tarihine göre ISO tarihe çevir.
+- Lead score 75+ sıcak, 45-74 orta, 0-44 düşük.
+- Transkript anlamsızsa intent BILGI, lead_score 10-30 arası ver.
+
+Transkript:
+${transcriptText}
+          `.trim(),
+        },
+      ],
+    });
+
+    const rawText = completion.content?.[0]?.text || '';
+    const parsed = safeJsonParse(rawText);
+    analysis = normalizeAnalysis(parsed);
+  } catch (e) {
+    console.log('Anthropic error:', e?.message || e);
+  }
+
+  let insertedCall = null;
+
+  try {
+    const { data, error } = await supabase
+      .from('calls')
+      .insert({
+        tenant_id: null,
+        caller_phone: msg.call?.customer?.number || 'web-test',
+        caller_name: analysis.caller_name,
+        duration_seconds: Math.round(msg.durationSeconds || 0),
+        transcript: messages,
+        summary: analysis.summary,
+        intent: analysis.intent,
+        lead_score: analysis.lead_score,
+        slots: analysis.slots,
+        status: analysis.status,
+        created_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    insertedCall = data;
+  } catch (e) {
+    console.log('Supabase calls insert error:', e?.message || e);
+
+    return res.status(500).json({
+      success: false,
+      error: 'calls_insert_failed',
+      detail: e?.message || String(e),
+    });
+  }
+
+  try {
+    await upsertLead({ insertedCall, analysis });
+  } catch (e) {
+    console.log('Lead upsert error:', e?.message || e);
+  }
+
+  if (analysis.slots?.appointment_requested && insertedCall) {
+    try {
+      const { error } = await supabase.from('appointments').insert({
+        call_id: insertedCall.id,
+        tenant_id: insertedCall.tenant_id || null,
+        client_name: analysis.caller_name || 'Bilinmeyen Müşteri',
+        client_phone: insertedCall.caller_phone,
+        scheduled_at: analysis.slots?.preferred_time || null,
+        status: 'talep_alindi',
+        appointment_type: analysis.intent,
+        notes: analysis.summary,
+        source: 'ai_call',
+      });
+
+      if (error) throw error;
+    } catch (e) {
+      console.log('Supabase appointments insert error:', e?.message || e);
+    }
+  }
+
+  console.log(
+    'CALL SAVED:',
+    insertedCall?.id,
+    '| INTENT:',
+    analysis.intent,
+    '| SCORE:',
+    analysis.lead_score
+  );
+
+  return res.status(200).json({
+    success: true,
+    call_id: insertedCall?.id,
+    analysis,
   });
-  calls = await res.json();
 }
-
-async function loadAppointments() {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/appointments?select=*&order=created_at.desc`, {
-    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-  });
-  appointments = await res.json();
-}
-
-function setPage(p, el) {
-  currentPage = p;
-  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
-  el.classList.add('active');
-  render();
-}
-
-function render() {
-  if (currentPage === 'dashboard') renderDashboard();
-  if (currentPage === 'calls') renderCalls();
-  if (currentPage === 'appointments') renderAppointments();
-}
-
-function renderDashboard() {
-  const total = calls.length;
-  const appt = calls.filter(c=>c.status==='randevu_alindi').length;
-  const hot = calls.filter(c=>(c.lead_score||0)>=75).length;
-
-  document.getElementById('main').innerHTML = `
-    <div class="card">
-      <h3>Dashboard</h3>
-      <p>Toplam çağrı: ${total}</p>
-      <p>Randevu: ${appt}</p>
-      <p>Sıcak lead: ${hot}</p>
-    </div>
-  `;
-}
-
-function renderCalls() {
-  let html = `
-    <div class="card">
-      <h3>Çağrılar</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Telefon</th>
-            <th>Intent</th>
-            <th>Skor</th>
-            <th>Özet</th>
-          </tr>
-        </thead>
-        <tbody>
-  `;
-
-  calls.forEach(c=>{
-    html += `
-      <tr>
-        <td>${c.caller_phone}</td>
-        <td>${c.intent || '-'}</td>
-        <td>${c.lead_score || 0}</td>
-        <td>${c.summary || '-'}</td>
-      </tr>
-    `;
-  });
-
-  html += `</tbody></table></div>`;
-  document.getElementById('main').innerHTML = html;
-}
-
-function renderAppointments() {
-  let html = `
-    <div class="card">
-      <h3>Randevular</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Müşteri</th>
-            <th>Telefon</th>
-            <th>Tarih</th>
-            <th>Not</th>
-          </tr>
-        </thead>
-        <tbody>
-  `;
-
-  appointments.forEach(a=>{
-    html += `
-      <tr>
-        <td>${a.client_name}</td>
-        <td>${a.client_phone}</td>
-        <td>${a.scheduled_at || 'Belirsiz'}</td>
-        <td>${a.notes || ''}</td>
-      </tr>
-    `;
-  });
-
-  html += `</tbody></table></div>`;
-  document.getElementById('main').innerHTML = html;
-}
-
-connect();
-
-</script>
-
-</body>
-</html>
