@@ -16,7 +16,6 @@ function safeJsonParse(text) {
   } catch {
     const match = text?.match(/\{[\s\S]*\}/);
     if (!match) return null;
-
     try {
       return JSON.parse(match[0]);
     } catch {
@@ -27,7 +26,6 @@ function safeJsonParse(text) {
 
 function messagesToPlainText(messages, fallbackTranscript = '') {
   if (fallbackTranscript) return fallbackTranscript;
-
   if (!Array.isArray(messages)) return '';
 
   return messages
@@ -39,15 +37,24 @@ function messagesToPlainText(messages, fallbackTranscript = '') {
     .join('\n');
 }
 
+function temperatureFromScore(score) {
+  if (score >= 75) return 'hot';
+  if (score >= 45) return 'warm';
+  return 'cold';
+}
+
 function normalizeAnalysis(raw) {
   const score = Number(raw?.lead_score);
+
+  const cleanScore = Number.isFinite(score)
+    ? Math.max(0, Math.min(100, score))
+    : 30;
 
   return {
     caller_name: raw?.caller_name || null,
     intent: raw?.intent || 'BILGI',
-    lead_score: Number.isFinite(score)
-      ? Math.max(0, Math.min(100, score))
-      : 30,
+    lead_score: cleanScore,
+    temperature: temperatureFromScore(cleanScore),
     summary: raw?.summary || 'Çağrı kaydedildi, AI özeti üretilemedi.',
     status:
       raw?.status ||
@@ -62,6 +69,48 @@ function normalizeAnalysis(raw) {
       urgency: raw?.slots?.urgency || null,
     },
   };
+}
+
+async function upsertLead({ insertedCall, analysis }) {
+  const phone = insertedCall.caller_phone || 'web-test';
+
+  const { data: existing } = await supabase
+    .from('leads')
+    .select('*')
+    .eq('phone', phone)
+    .maybeSingle();
+
+  const payload = {
+    tenant_id: insertedCall.tenant_id || null,
+    phone,
+    name: analysis.caller_name || existing?.name || null,
+    intent: analysis.intent,
+    lead_score: analysis.lead_score,
+    temperature: analysis.temperature,
+    district: analysis.slots?.district,
+    room_count: analysis.slots?.room_count,
+    budget: analysis.slots?.budget,
+    property_type: analysis.slots?.property_type,
+    urgency: analysis.slots?.urgency,
+    appointment_requested: analysis.slots?.appointment_requested,
+    summary: analysis.summary,
+    status: analysis.temperature === 'hot' ? 'hot_lead' : 'new',
+    last_call_id: insertedCall.id,
+    last_call_at: insertedCall.created_at,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (existing) {
+    await supabase
+      .from('leads')
+      .update({
+        ...payload,
+        call_count: (existing.call_count || 1) + 1,
+      })
+      .eq('id', existing.id);
+  } else {
+    await supabase.from('leads').insert(payload);
+  }
 }
 
 export default async function handler(req, res) {
@@ -99,14 +148,13 @@ export default async function handler(req, res) {
 
     const completion = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 700,
+      max_tokens: 900,
       messages: [
         {
           role: 'user',
           content: `
 Sen bir emlak ofisi çağrı analiz motorusun.
 
-Aşağıdaki çağrı transkriptini analiz et.
 Sadece geçerli JSON döndür. Markdown, açıklama veya ek metin yazma.
 
 Bugünün tarihi: ${todayTR}
@@ -186,6 +234,12 @@ ${transcriptText}
       error: 'calls_insert_failed',
       detail: e?.message || String(e),
     });
+  }
+
+  try {
+    await upsertLead({ insertedCall, analysis });
+  } catch (e) {
+    console.log('Lead upsert error:', e?.message || e);
   }
 
   if (analysis.slots?.appointment_requested && insertedCall) {
