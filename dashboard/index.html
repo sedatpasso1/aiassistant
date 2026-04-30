@@ -4,485 +4,173 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>VoiceEstate Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet"/>
+
 <style>
-*{box-sizing:border-box;margin:0;padding:0;}
-:root{
-  --bg:#07070e;--card:#0f0f1a;--hover:#151523;--border:#1a1a2d;
-  --gold:#c8a84b;--green:#34c97e;--red:#f16b6b;--blue:#5b9cf6;
-  --purple:#9b7ff4;--text:#eaeaf5;--muted:#52526e;--dim:#252538;
-}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
-::-webkit-scrollbar{width:5px;height:5px;}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
-@keyframes pulse{0%,100%{opacity:0.4;}50%{opacity:1;}}
-@keyframes fadein{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-.fadein{animation:fadein 0.3s ease;}
+body { margin:0; font-family:'DM Sans',sans-serif; background:#0b0b12; color:#eee; }
+.sidebar { width:200px; background:#111; height:100vh; position:fixed; padding:20px; }
+.nav-item { margin:10px 0; cursor:pointer; color:#aaa; }
+.nav-item.active { color:#fff; font-weight:bold; }
 
-/* CONFIG SCREEN */
-#config-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;}
-.config-box{width:100%;max-width:440px;}
-.config-logo{text-align:center;margin-bottom:32px;}
-.config-logo .icon{font-size:44px;margin-bottom:12px;}
-.config-logo h1{font-family:'Playfair Display',serif;font-size:30px;font-weight:900;color:var(--gold);}
-.config-logo p{color:var(--muted);font-size:14px;margin-top:6px;}
-.config-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;}
-.config-card label{color:var(--muted);font-size:12px;display:block;margin-bottom:8px;}
-.config-card input{width:100%;padding:12px 14px;background:var(--hover);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:monospace;outline:none;margin-bottom:16px;}
-.config-card input:focus{border-color:var(--gold);}
-.btn-connect{width:100%;background:var(--gold);color:#000;border:none;border-radius:10px;padding:13px;font-weight:700;font-size:15px;cursor:pointer;transition:opacity 0.2s;}
-.btn-connect:hover{opacity:0.9;}
-.btn-connect:disabled{background:var(--dim);color:var(--muted);cursor:not-allowed;}
-.config-hint{margin-top:16px;padding:12px;background:var(--hover);border-radius:8px;color:var(--muted);font-size:11px;line-height:1.6;}
-.err{color:var(--red);font-size:12px;margin-bottom:12px;padding:8px 12px;background:rgba(241,107,107,0.1);border-radius:8px;}
+.main { margin-left:200px; padding:20px; }
 
-/* LAYOUT */
-#app{display:flex;min-height:100vh;display:none;}
-.sidebar{width:210px;flex-shrink:0;background:var(--card);border-right:1px solid var(--border);padding:0 12px;display:flex;flex-direction:column;}
-.sidebar-logo{padding:22px 12px 16px;border-bottom:1px solid var(--border);}
-.sidebar-logo h2{font-family:'Playfair Display',serif;font-weight:900;font-size:18px;color:var(--gold);}
-.sidebar-logo small{color:var(--muted);font-size:10px;}
-.tenant-card{padding:10px 12px;background:var(--hover);border-radius:10px;border:1px solid var(--border);margin:12px 0 16px;}
-.tenant-card .name{color:var(--gold);font-size:12px;font-weight:600;}
-.tenant-card .sub{color:var(--muted);font-size:10px;margin-top:2px;}
-.tenant-status{display:flex;gap:5px;align-items:center;margin-top:8px;}
-.dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite;}
-.tenant-status span{color:var(--green);font-size:10px;}
-.nav-item{padding:10px 12px;border-radius:8px;margin-bottom:2px;color:var(--muted);font-size:13px;display:flex;gap:8px;align-items:center;cursor:pointer;border:1px solid transparent;transition:all 0.15s;}
-.nav-item.active{background:rgba(200,168,75,0.15);color:var(--gold);border-color:rgba(200,168,75,0.3);font-weight:600;}
-.sidebar-footer{padding:12px 0;border-top:1px solid var(--border);margin-top:auto;}
-.btn-disconnect{width:100%;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:8px;font-size:12px;cursor:pointer;}
+.card { background:#151523; padding:16px; border-radius:10px; margin-bottom:20px; }
 
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
-.topbar{padding:14px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(15,15,26,0.8);}
-.topbar h2{font-family:'Playfair Display',serif;font-weight:800;font-size:20px;}
-.topbar small{color:var(--muted);font-size:12px;}
-.live-indicator{display:flex;gap:8px;align-items:center;}
-.live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s infinite;}
-.live-indicator span{color:var(--muted);font-size:12px;}
-.content{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:20px;}
+table { width:100%; border-collapse:collapse; }
+th, td { padding:10px; border-bottom:1px solid #222; font-size:13px; }
+th { color:#777; text-align:left; }
 
-/* STATS */
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
-.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 22px;position:relative;overflow:hidden;}
-.stat-card .stat-icon{position:absolute;right:16px;top:14px;font-size:22px;opacity:0.12;}
-.stat-card .stat-label{color:var(--muted);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:10px;}
-.stat-card .stat-value{font-family:'Playfair Display',serif;font-size:34px;font-weight:900;line-height:1;}
-.stat-card .stat-sub{color:var(--muted);font-size:12px;margin-top:6px;}
+.badge { padding:4px 8px; border-radius:6px; font-size:11px; }
 
-/* TABLE */
-.table-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
-.table-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
-.table-header .title{display:flex;align-items:center;gap:8px;color:var(--text);font-weight:700;}
-.table-header .update-time{color:var(--muted);font-size:11px;}
-.filters{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;}
-.filter-btn{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 12px;cursor:pointer;font-size:12px;transition:all 0.15s;font-family:'DM Sans',sans-serif;}
-.filter-btn.active{font-weight:700;}
-.btn-refresh{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 10px;cursor:pointer;font-size:12px;}
-.empty{padding:60px;text-align:center;color:var(--muted);}
-.empty .empty-icon{font-size:32px;margin-bottom:12px;}
-table{width:100%;border-collapse:collapse;}
-thead tr{border-bottom:1px solid var(--border);}
-th{padding:10px 16px;text-align:left;color:var(--muted);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;font-weight:500;white-space:nowrap;}
-tbody tr{border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.12s;}
-tbody tr:hover{background:var(--hover);}
-td{padding:13px 16px;font-size:13px;}
-.badge{display:inline-block;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;white-space:nowrap;}
-.score-ring{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;}
-.summary-cell{color:var(--muted);font-size:12px;line-height:1.4;max-width:200px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
-.btn-detail{background:transparent;border:1px solid var(--border);border-radius:6px;padding:5px 12px;color:var(--muted);font-size:12px;cursor:pointer;}
-
-/* MODAL */
-#modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:1000;align-items:center;justify-content:center;padding:24px;}
-#modal-overlay.show{display:flex;}
-.modal{background:var(--card);border:1px solid var(--border);border-radius:18px;width:100%;max-width:660px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;}
-.modal-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;}
-.modal-phone{color:var(--text);font-weight:700;font-size:17px;margin-bottom:4px;}
-.modal-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
-.modal-actions{display:flex;gap:10px;align-items:center;}
-.btn-close{background:var(--hover);border:1px solid var(--border);border-radius:8px;padding:6px 14px;cursor:pointer;color:var(--muted);font-size:20px;line-height:1;}
-.modal-summary{padding:14px 24px;background:rgba(200,168,75,0.08);border-bottom:1px solid var(--border);}
-.modal-summary .label{color:var(--muted);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;}
-.modal-summary p{color:var(--text);font-size:13px;line-height:1.6;}
-.modal-slots{padding:12px 24px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;}
-.slot-tag{background:var(--hover);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;}
-.slot-tag .slot-key{color:var(--muted);}
-.slot-tag .slot-val{color:var(--green);font-weight:600;}
-.transcript{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:12px;}
-.msg{display:flex;gap:10px;align-items:flex-start;}
-.msg-avatar{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;}
-.msg-text{color:var(--text);font-size:13px;line-height:1.6;padding-top:4px;flex:1;}
-
-/* ERROR BAR */
-.error-bar{padding:12px 20px;background:rgba(241,107,107,0.1);color:var(--red);font-size:13px;border-bottom:1px solid var(--border);}
+.green { background:#1f4; color:#000; }
+.blue { background:#49f; }
+.red { background:#f55; }
+.gold { background:#c8a84b; color:#000; }
 </style>
 </head>
+
 <body>
 
-<!-- CONFIG SCREEN -->
-<div id="config-screen">
-  <div class="config-box">
-    <div class="config-logo">
-      <div class="icon">🏛️</div>
-      <h1>VoiceEstate</h1>
-      <p>Supabase bağlantını gir</p>
-    </div>
-    <div class="config-card">
-      <label>Supabase Project URL</label>
-      <input type="text" id="inp-url" placeholder="https://xxxxx.supabase.co"/>
-      <label>Anon Public Key</label>
-      <input type="password" id="inp-key" placeholder="eyJhbGciOiJIUzI1NiIs..."/>
-      <div id="config-err" class="err" style="display:none"></div>
-      <button class="btn-connect" id="btn-connect" onclick="connect()">Bağlan & Dashboard'u Aç</button>
-      <div class="config-hint">
-        Supabase → Settings → API →<br/>
-        <strong>Project URL</strong> ve <strong>anon public</strong> key'i yapıştır.
-      </div>
-    </div>
-  </div>
+<div class="sidebar">
+  <h2>VoiceEstate</h2>
+  <div class="nav-item active" onclick="setPage('dashboard', this)">Dashboard</div>
+  <div class="nav-item" onclick="setPage('calls', this)">Çağrılar</div>
+  <div class="nav-item" onclick="setPage('appointments', this)">Randevular</div>
 </div>
 
-<!-- MAIN APP -->
-<div id="app">
-  <div class="sidebar">
-    <div class="sidebar-logo">
-      <h2>VoiceEstate</h2>
-      <small>AI Call Platform</small>
-    </div>
-    <div style="padding:12px 0;flex:1">
-      <div class="tenant-card">
-        <div class="name">Atlas Gayrimenkul</div>
-        <div class="sub">Emlak · İstanbul</div>
-        <div class="tenant-status"><div class="dot"></div><span>Sistem Aktif</span></div>
-      </div>
-      <div class="nav-item active">📊 Dashboard</div>
-      <div class="nav-item">📞 Çağrılar</div>
-      <div class="nav-item">📅 Randevular</div>
-      <div class="nav-item">🏠 Portföy</div>
-      <div class="nav-item">⚙️ Ayarlar</div>
-    </div>
-    <div class="sidebar-footer">
-      <button class="btn-disconnect" onclick="disconnect()">🔌 Bağlantıyı Değiştir</button>
-    </div>
-  </div>
-
-  <div class="main">
-    <div class="topbar">
-      <div>
-        <h2>Dashboard</h2>
-        <small id="topbar-date"></small>
-      </div>
-      <div class="live-indicator">
-        <div class="live-dot"></div>
-        <span>15sn'de bir yenileniyor</span>
-      </div>
-    </div>
-    <div class="content">
-      <!-- Stats -->
-      <div class="stats-grid">
-        <div class="stat-card" style="border-top:2px solid var(--gold)">
-          <div class="stat-icon">📞</div>
-          <div class="stat-label">Toplam Çağrı</div>
-          <div class="stat-value" id="stat-total" style="color:var(--gold)">—</div>
-          <div class="stat-sub" id="stat-today">Bugün: —</div>
-        </div>
-        <div class="stat-card" style="border-top:2px solid var(--green)">
-          <div class="stat-icon">📅</div>
-          <div class="stat-label">Randevu</div>
-          <div class="stat-value" id="stat-appt" style="color:var(--green)">—</div>
-          <div class="stat-sub" id="stat-conv">— dönüşüm</div>
-        </div>
-        <div class="stat-card" style="border-top:2px solid var(--red)">
-          <div class="stat-icon">🔥</div>
-          <div class="stat-label">Sıcak Lead</div>
-          <div class="stat-value" id="stat-hot" style="color:var(--red)">—</div>
-          <div class="stat-sub">Skor ≥ 75</div>
-        </div>
-        <div class="stat-card" style="border-top:2px solid var(--purple)">
-          <div class="stat-icon">⚡</div>
-          <div class="stat-label">Ort. Lead Skoru</div>
-          <div class="stat-value" id="stat-score" style="color:var(--purple)">—</div>
-          <div class="stat-sub">0-100</div>
-        </div>
-      </div>
-
-      <!-- Table -->
-      <div class="table-card">
-        <div class="table-header">
-          <div class="title">
-            <div class="dot"></div>
-            Çağrılar
-            <span class="update-time" id="update-time"></span>
-          </div>
-          <div class="filters">
-            <button class="filter-btn active" onclick="setFilter('ALL',this)" style="border-color:var(--gold);color:var(--gold)">Tümü</button>
-            <button class="filter-btn" onclick="setFilter('SATIN_ALMA',this)">🏠 Satın Alma</button>
-            <button class="filter-btn" onclick="setFilter('KIRA',this)">🔑 Kiralama</button>
-            <button class="filter-btn" onclick="setFilter('SATIS',this)">💰 Satış</button>
-            <button class="filter-btn" onclick="setFilter('BILGI',this)">💬 Bilgi</button>
-            <button class="btn-refresh" onclick="loadCalls()">🔄</button>
-          </div>
-        </div>
-        <div id="error-bar" class="error-bar" style="display:none"></div>
-        <div id="table-body"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL -->
-<div id="modal-overlay" onclick="closeModal()">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-header">
-      <div>
-        <div class="modal-phone" id="modal-phone"></div>
-        <div class="modal-meta" id="modal-meta"></div>
-      </div>
-      <div class="modal-actions">
-        <div class="score-ring" id="modal-score"></div>
-        <button class="btn-close" onclick="closeModal()">×</button>
-      </div>
-    </div>
-    <div class="modal-summary" id="modal-summary" style="display:none">
-      <div class="label">AI Özeti</div>
-      <p id="modal-summary-text"></p>
-    </div>
-    <div class="modal-slots" id="modal-slots" style="display:none"></div>
-    <div class="transcript" id="modal-transcript"></div>
-  </div>
-</div>
+<div class="main" id="main"></div>
 
 <script>
-// ── State ──────────────────────────────────────────────────
+
 let SUPABASE_URL = '';
 let SUPABASE_KEY = '';
-let allCalls = [];
-let currentFilter = 'ALL';
-let refreshTimer = null;
 
-const INTENT = {
-  SATIN_ALMA: { label:'Satın Alma', color:'#34c97e', emoji:'🏠' },
-  KIRA:       { label:'Kiralama',   color:'#5b9cf6', emoji:'🔑' },
-  SATIS:      { label:'Satış',      color:'#c8a84b', emoji:'💰' },
-  BILGI:      { label:'Bilgi',      color:'#9b7ff4', emoji:'💬' },
-};
-const STATUS = {
-  randevu_alindi:   { label:'Randevu Alındı', color:'#34c97e' },
-  bilgi_verildi:    { label:'Bilgi Verildi',  color:'#5b9cf6' },
-  degerleme_talebi: { label:'Değerleme',      color:'#c8a84b' },
-};
+let calls = [];
+let appointments = [];
 
-// ── Format ─────────────────────────────────────────────────
-function fmtDuration(s) {
-  if (!s) return '—';
-  return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
-}
-function fmtTime(ts) {
-  if (!ts) return '—';
-  return new Date(ts).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
-}
-function fmtDate(ts) {
-  if (!ts) return '—';
-  const d = new Date(ts), today = new Date();
-  if (d.toDateString()===today.toDateString()) return 'Bugün';
-  const yest = new Date(today); yest.setDate(yest.getDate()-1);
-  if (d.toDateString()===yest.toDateString()) return 'Dün';
-  return d.toLocaleDateString('tr-TR',{day:'numeric',month:'short'});
-}
+let currentPage = 'dashboard';
 
-// ── Connect ────────────────────────────────────────────────
 async function connect() {
-  const url = document.getElementById('inp-url').value.trim();
-  const key = document.getElementById('inp-key').value.trim();
-  const errEl = document.getElementById('config-err');
-  const btn = document.getElementById('btn-connect');
+  SUPABASE_URL = prompt("Supabase URL");
+  SUPABASE_KEY = prompt("Supabase KEY");
 
-  if (!url || !key) return;
-  btn.textContent = 'Bağlanıyor...';
-  btn.disabled = true;
-  errEl.style.display = 'none';
-
-  try {
-    const res = await fetch(`${url}/rest/v1/calls?select=id&limit=1`, {
-      headers: { 'apikey': key, 'Authorization': `Bearer ${key}` }
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
-
-    SUPABASE_URL = url;
-    SUPABASE_KEY = key;
-    showApp();
-  } catch(e) {
-    errEl.textContent = 'Bağlantı hatası: ' + e.message;
-    errEl.style.display = 'block';
-    btn.textContent = 'Bağlan & Dashboard\'u Aç';
-    btn.disabled = false;
-  }
+  await loadAll();
 }
 
-function showApp() {
-  document.getElementById('config-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
-  document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long'});
-  loadCalls();
-  refreshTimer = setInterval(loadCalls, 15000);
+async function loadAll() {
+  await loadCalls();
+  await loadAppointments();
+  render();
 }
 
-function disconnect() {
-  clearInterval(refreshTimer);
-  SUPABASE_URL = ''; SUPABASE_KEY = ''; allCalls = [];
-  document.getElementById('config-screen').style.display = 'flex';
-  document.getElementById('app').style.display = 'none';
-}
-
-// ── Load Calls ─────────────────────────────────────────────
 async function loadCalls() {
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/calls?select=*&order=created_at.desc&limit=100`, {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-    });
-    if (!res.ok) throw new Error(await res.text());
-    allCalls = await res.json();
-
-    document.getElementById('error-bar').style.display = 'none';
-    document.getElementById('update-time').textContent = `· ${fmtTime(new Date())}`;
-    updateStats();
-    renderTable();
-  } catch(e) {
-    const bar = document.getElementById('error-bar');
-    bar.textContent = '⚠️ ' + e.message;
-    bar.style.display = 'block';
-  }
-}
-
-// ── Stats ──────────────────────────────────────────────────
-function updateStats() {
-  const today = new Date().toDateString();
-  const todayCalls = allCalls.filter(c=>new Date(c.created_at).toDateString()===today);
-  const appts = allCalls.filter(c=>c.status==='randevu_alindi').length;
-  const hot = allCalls.filter(c=>(c.lead_score||0)>=75).length;
-  const avg = allCalls.length ? Math.round(allCalls.reduce((a,c)=>a+(c.lead_score||0),0)/allCalls.length) : 0;
-  const conv = allCalls.length ? Math.round(appts/allCalls.length*100) : 0;
-
-  document.getElementById('stat-total').textContent = allCalls.length;
-  document.getElementById('stat-today').textContent = `Bugün: ${todayCalls.length}`;
-  document.getElementById('stat-appt').textContent = appts;
-  document.getElementById('stat-conv').textContent = `%${conv} dönüşüm`;
-  document.getElementById('stat-hot').textContent = hot;
-  document.getElementById('stat-score').textContent = avg;
-}
-
-// ── Table ──────────────────────────────────────────────────
-function setFilter(f, btn) {
-  currentFilter = f;
-  document.querySelectorAll('.filter-btn').forEach(b=>{
-    b.classList.remove('active');
-    b.style.borderColor=''; b.style.color='';
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/calls?select=*&order=created_at.desc`, {
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
   });
-  btn.classList.add('active');
-  const colors = {ALL:'#c8a84b',SATIN_ALMA:'#34c97e',KIRA:'#5b9cf6',SATIS:'#c8a84b',BILGI:'#9b7ff4'};
-  btn.style.borderColor = colors[f]||'#c8a84b';
-  btn.style.color = colors[f]||'#c8a84b';
-  renderTable();
+  calls = await res.json();
 }
 
-function renderTable() {
-  const filtered = currentFilter==='ALL' ? allCalls : allCalls.filter(c=>c.intent===currentFilter);
-  const el = document.getElementById('table-body');
+async function loadAppointments() {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/appointments?select=*&order=created_at.desc`, {
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+  });
+  appointments = await res.json();
+}
 
-  if (filtered.length===0) {
-    el.innerHTML = `<div class="empty"><div class="empty-icon">📭</div>${currentFilter==='ALL'?'Henüz çağrı yok. Vapi\'de test araması yap.':'Bu filtrede çağrı yok.'}</div>`;
-    return;
-  }
+function setPage(p, el) {
+  currentPage = p;
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
 
-  let html = `<div style="overflow-x:auto"><table><thead><tr>
-    <th>Tarih/Saat</th><th>Numara</th><th>Süre</th><th>Intent</th><th>Özet</th><th>Durum</th><th>Skor</th><th></th>
-  </tr></thead><tbody>`;
+function render() {
+  if (currentPage === 'dashboard') renderDashboard();
+  if (currentPage === 'calls') renderCalls();
+  if (currentPage === 'appointments') renderAppointments();
+}
 
-  filtered.forEach((call,i) => {
-    const intent = INTENT[call.intent]||INTENT.BILGI;
-    const status = STATUS[call.status];
-    const score = call.lead_score||0;
-    const scoreColor = score>=75?'#34c97e':score>=45?'#c8a84b':'#f16b6b';
-    const badgeHtml = `<span class="badge" style="background:${intent.color}18;color:${intent.color};border:1px solid ${intent.color}35">${intent.emoji} ${intent.label}</span>`;
-    const statusHtml = status ? `<span class="badge" style="background:${status.color}18;color:${status.color};border:1px solid ${status.color}35">${status.label}</span>` : '<span style="color:var(--muted)">—</span>';
+function renderDashboard() {
+  const total = calls.length;
+  const appt = calls.filter(c=>c.status==='randevu_alindi').length;
+  const hot = calls.filter(c=>(c.lead_score||0)>=75).length;
 
-    html += `<tr onclick="openModal(${i})">
-      <td><div style="color:var(--muted);font-size:11px">${fmtDate(call.created_at)}</div><div style="font-weight:500">${fmtTime(call.created_at)}</div></td>
-      <td style="font-family:monospace">${call.caller_phone||'—'}</td>
-      <td style="color:var(--muted)">${fmtDuration(call.duration_seconds)}</td>
-      <td>${badgeHtml}</td>
-      <td><div class="summary-cell">${call.summary||'—'}</div></td>
-      <td>${statusHtml}</td>
-      <td><div class="score-ring" style="border:2.5px solid ${scoreColor};color:${scoreColor};background:${scoreColor}12">${score}</div></td>
-      <td><button class="btn-detail" onclick="event.stopPropagation();openModal(${i})">Detay</button></td>
-    </tr>`;
+  document.getElementById('main').innerHTML = `
+    <div class="card">
+      <h3>Dashboard</h3>
+      <p>Toplam çağrı: ${total}</p>
+      <p>Randevu: ${appt}</p>
+      <p>Sıcak lead: ${hot}</p>
+    </div>
+  `;
+}
+
+function renderCalls() {
+  let html = `
+    <div class="card">
+      <h3>Çağrılar</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Telefon</th>
+            <th>Intent</th>
+            <th>Skor</th>
+            <th>Özet</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  calls.forEach(c=>{
+    html += `
+      <tr>
+        <td>${c.caller_phone}</td>
+        <td>${c.intent || '-'}</td>
+        <td>${c.lead_score || 0}</td>
+        <td>${c.summary || '-'}</td>
+      </tr>
+    `;
   });
 
-  html += '</tbody></table></div>';
-  el.innerHTML = html;
+  html += `</tbody></table></div>`;
+  document.getElementById('main').innerHTML = html;
 }
 
-// ── Modal ──────────────────────────────────────────────────
-function openModal(idx) {
-  const filtered = currentFilter==='ALL' ? allCalls : allCalls.filter(c=>c.intent===currentFilter);
-  const call = filtered[idx];
-  if (!call) return;
+function renderAppointments() {
+  let html = `
+    <div class="card">
+      <h3>Randevular</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Müşteri</th>
+            <th>Telefon</th>
+            <th>Tarih</th>
+            <th>Not</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
 
-  const intent = INTENT[call.intent]||INTENT.BILGI;
-  const score = call.lead_score||0;
-  const scoreColor = score>=75?'#34c97e':score>=45?'#c8a84b':'#f16b6b';
+  appointments.forEach(a=>{
+    html += `
+      <tr>
+        <td>${a.client_name}</td>
+        <td>${a.client_phone}</td>
+        <td>${a.scheduled_at || 'Belirsiz'}</td>
+        <td>${a.notes || ''}</td>
+      </tr>
+    `;
+  });
 
-  document.getElementById('modal-phone').textContent = call.caller_phone||'Bilinmiyor';
-  document.getElementById('modal-meta').innerHTML = `
-    <span class="badge" style="background:${intent.color}18;color:${intent.color};border:1px solid ${intent.color}35">${intent.emoji} ${intent.label}</span>
-    <span style="color:var(--muted);font-size:12px">${fmtDuration(call.duration_seconds)} · ${fmtTime(call.created_at)}</span>`;
-  document.getElementById('modal-score').style.cssText = `width:38px;height:38px;border-radius:50%;border:2.5px solid ${scoreColor};color:${scoreColor};background:${scoreColor}12;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800`;
-  document.getElementById('modal-score').textContent = score;
-
-  if (call.summary) {
-    document.getElementById('modal-summary').style.display='block';
-    document.getElementById('modal-summary-text').textContent = call.summary;
-  } else {
-    document.getElementById('modal-summary').style.display='none';
-  }
-
-  const slots = call.slots||{};
-  const slotEntries = Object.entries(slots).filter(([,v])=>v&&v!==false);
-  if (slotEntries.length) {
-    document.getElementById('modal-slots').style.display='flex';
-    document.getElementById('modal-slots').innerHTML = slotEntries.map(([k,v])=>
-      `<div class="slot-tag"><span class="slot-key">${k}: </span><span class="slot-val">${v}</span></div>`
-    ).join('');
-  } else {
-    document.getElementById('modal-slots').style.display='none';
-  }
-
-  const msgs = (Array.isArray(call.transcript)?call.transcript:[]).filter(m=>m.role!=='system');
-  const transcriptEl = document.getElementById('modal-transcript');
-  if (msgs.length===0) {
-    transcriptEl.innerHTML = '<div style="color:var(--muted);text-align:center;margin-top:20px;font-size:13px">Transkript yok.</div>';
-  } else {
-    transcriptEl.innerHTML = msgs.map(m=>{
-      const isBot = m.role==='bot';
-      return `<div class="msg">
-        <div class="msg-avatar" style="background:${isBot?'rgba(200,168,75,0.15)':'rgba(91,156,246,0.15)'};border:1px solid ${isBot?'rgba(200,168,75,0.3)':'rgba(91,156,246,0.3)'};color:${isBot?'#c8a84b':'#5b9cf6'}">${isBot?'AI':'M'}</div>
-        <div class="msg-text">${m.message||m.content||''}</div>
-      </div>`;
-    }).join('');
-  }
-
-  document.getElementById('modal-overlay').classList.add('show');
+  html += `</tbody></table></div>`;
+  document.getElementById('main').innerHTML = html;
 }
 
-function closeModal() {
-  document.getElementById('modal-overlay').classList.remove('show');
-}
+connect();
 
-// Enter key for config
-document.addEventListener('keydown', e=>{
-  if(e.key==='Enter' && document.getElementById('config-screen').style.display!=='none') connect();
-  if(e.key==='Escape') closeModal();
-});
 </script>
+
 </body>
 </html>
