@@ -83,7 +83,7 @@ export default async function handler(req, res) {
 
   try {
     const completion = await anthropic.messages.create({
-      model: 'claude-3-5-haiku-latest',
+      model: 'claude-3-5-haiku-20241022',
       max_tokens: 700,
       messages: [
         {
