@@ -14,7 +14,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .config-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px}
 .config-card label{color:var(--muted);font-size:12px;display:block;margin-bottom:8px}
 .config-card input{width:100%;padding:12px 14px;background:var(--hover);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:monospace;margin-bottom:16px}
-.btn-connect{width:100%;background:var(--gold);color:#000;border:none;border-radius:10px;padding:13px;font-weight:800;cursor:pointer}.err{color:var(--red);font-size:12px;margin-bottom:12px}
+.btn-connect,.btn-primary{background:var(--gold);color:#000;border:none;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer}
+.btn-connect{width:100%;padding:13px}.err{color:var(--red);font-size:12px;margin-bottom:12px}
 #app{display:none;min-height:100vh}.sidebar{width:220px;background:var(--card);border-right:1px solid var(--border);padding:0 12px;display:flex;flex-direction:column}
 .sidebar-logo{padding:22px 12px 16px;border-bottom:1px solid var(--border)}.sidebar-logo h2{font-family:'Playfair Display',serif;color:var(--gold)}.sidebar-logo small{color:var(--muted)}
 .tenant-card{padding:12px;background:var(--hover);border:1px solid var(--border);border-radius:12px;margin:14px 0}.tenant-card .name{color:var(--gold);font-weight:800}.tenant-card .sub{color:var(--muted);font-size:11px}
@@ -25,13 +26,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .content{padding:24px;display:flex;flex-direction:column;gap:20px;overflow:auto}.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
 .stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}.stat-label{color:var(--muted);font-size:10px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px}.stat-value{font-family:'Playfair Display',serif;font-size:32px;font-weight:900}.stat-sub{color:var(--muted);font-size:12px;margin-top:6px}
 .table-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}.table-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}.title{font-weight:800}.filters{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
-.filter-btn,.btn-refresh{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 11px;cursor:pointer;font-size:12px}.filter-btn.active{border-color:var(--gold);color:var(--gold);font-weight:800}
+.filter-btn,.btn-refresh,.btn-detail{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 11px;cursor:pointer;font-size:12px}.filter-btn.active{border-color:var(--gold);color:var(--gold);font-weight:800}
 table{width:100%;border-collapse:collapse}th{padding:10px 16px;text-align:left;color:var(--muted);font-size:10px;letter-spacing:.1em;text-transform:uppercase}td{padding:13px 16px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:top}tr:hover{background:var(--hover)}
 .badge{display:inline-block;border-radius:5px;padding:3px 8px;font-size:11px;font-weight:800;text-transform:uppercase}.summary-cell{color:var(--muted);font-size:12px;line-height:1.45;max-width:340px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .score-ring{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900}.empty{padding:60px;text-align:center;color:var(--muted)}
-.btn-detail{background:transparent;border:1px solid var(--border);border-radius:6px;padding:5px 12px;color:var(--muted);font-size:12px;cursor:pointer}
 #modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:999;align-items:center;justify-content:center;padding:24px}#modal-overlay.show{display:flex}.modal{background:var(--card);border:1px solid var(--border);border-radius:18px;width:100%;max-width:760px;max-height:88vh;overflow:auto}.modal-header{padding:20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between}.modal-body{padding:20px}.msg{display:flex;gap:10px;margin-bottom:12px}.msg-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800}.msg-text{font-size:13px;line-height:1.6}.btn-close{background:var(--hover);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:20px;padding:4px 12px;cursor:pointer}
-@media(max-width:1100px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.form-grid label{font-size:11px;color:var(--muted);display:block;margin-bottom:6px}.form-grid input,.form-grid select,.form-grid textarea{width:100%;background:var(--hover);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px}.form-grid textarea{min-height:80px;resize:vertical}.full{grid-column:1/-1}
+@media(max-width:1100px){.stats-grid{grid-template-columns:repeat(2,1fr)}.form-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -78,7 +79,6 @@ table{width:100%;border-collapse:collapse}th{padding:10px 16px;text-align:left;c
 
 <script>
 let SUPABASE_URL='',SUPABASE_KEY='',allCalls=[],allAppointments=[],allLeads=[],allProperties=[],currentPage='dashboard',currentFilter='ALL',refreshTimer=null;
-
 const INTENT={SATIN_ALMA:{label:'Satın Alma',color:'#34c97e',emoji:'🏠'},KIRA:{label:'Kiralama',color:'#5b9cf6',emoji:'🔑'},SATIS:{label:'Satış',color:'#c8a84b',emoji:'💰'},BILGI:{label:'Bilgi',color:'#9b7ff4',emoji:'💬'}};
 
 function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
@@ -117,10 +117,10 @@ function stats(){
 
 function renderDashboard(){document.getElementById('content').innerHTML=stats()+callsTable(allCalls.slice(0,8),'Son Çağrılar')+appointmentsTable(allAppointments.slice(0,6),'Son Randevular')}
 function renderCalls(){document.getElementById('content').innerHTML=stats()+callsTable(currentFilter==='ALL'?allCalls:allCalls.filter(c=>c.intent===currentFilter),'Çağrılar',true)}
-function setFilter(f,b){currentFilter=f;renderCalls()}
+function setFilter(f){currentFilter=f;renderCalls()}
 
 function callsTable(rows,title,filters=false){
-  const f=filters?`<div class="filters"><button class="filter-btn ${currentFilter==='ALL'?'active':''}" onclick="setFilter('ALL',this)">Tümü</button><button class="filter-btn ${currentFilter==='SATIN_ALMA'?'active':''}" onclick="setFilter('SATIN_ALMA',this)">🏠 Satın Alma</button><button class="filter-btn ${currentFilter==='KIRA'?'active':''}" onclick="setFilter('KIRA',this)">🔑 Kiralama</button><button class="filter-btn ${currentFilter==='SATIS'?'active':''}" onclick="setFilter('SATIS',this)">💰 Satış</button><button class="filter-btn ${currentFilter==='BILGI'?'active':''}" onclick="setFilter('BILGI',this)">💬 Bilgi</button></div>`:'';
+  const f=filters?`<div class="filters"><button class="filter-btn ${currentFilter==='ALL'?'active':''}" onclick="setFilter('ALL')">Tümü</button><button class="filter-btn ${currentFilter==='SATIN_ALMA'?'active':''}" onclick="setFilter('SATIN_ALMA')">🏠 Satın Alma</button><button class="filter-btn ${currentFilter==='KIRA'?'active':''}" onclick="setFilter('KIRA')">🔑 Kiralama</button><button class="filter-btn ${currentFilter==='SATIS'?'active':''}" onclick="setFilter('SATIS')">💰 Satış</button><button class="filter-btn ${currentFilter==='BILGI'?'active':''}" onclick="setFilter('BILGI')">💬 Bilgi</button></div>`:'';
   if(!rows.length)return `<div class="table-card"><div class="table-header"><div class="title">${title}</div>${f}</div><div class="empty">Kayıt yok.</div></div>`;
   let h=`<div class="table-card"><div class="table-header"><div class="title">📞 ${title}</div>${f}</div><table><thead><tr><th>Tarih</th><th>Numara</th><th>Intent</th><th>Özet</th><th>Durum</th><th>Skor</th><th></th></tr></thead><tbody>`;
   rows.forEach(c=>{const i=INTENT[c.intent]||INTENT.BILGI,col=scoreColor(c.lead_score||0);h+=`<tr><td>${fmtDate(c.created_at)}</td><td style="font-family:monospace">${esc(c.caller_phone)}</td><td><span class="badge" style="background:${i.color}18;color:${i.color};border:1px solid ${i.color}35">${i.emoji} ${i.label}</span></td><td><div class="summary-cell">${esc(c.summary)}</div></td><td><span class="badge" style="background:#5b9cf618;color:var(--blue);border:1px solid #5b9cf635">${esc(c.status)}</span></td><td><div class="score-ring" style="border:2.5px solid ${col};color:${col};background:${col}12">${c.lead_score||0}</div></td><td><button class="btn-detail" onclick="openCall('${c.id}')">Detay</button></td></tr>`});
@@ -141,17 +141,68 @@ function appointmentsTable(rows,title){
 }
 
 function renderProperties(){
-  let h=stats()+`<div class="table-card"><div class="table-header"><div class="title">🏠 Portföy</div></div><table><thead><tr><th>İlan</th><th>Tip</th><th>Bölge</th><th>Oda</th><th>m²</th><th>Fiyat</th><th>Durum</th><th>Açıklama</th></tr></thead><tbody>`;
+  let h=stats()+`<div class="table-card"><div class="table-header"><div class="title">🏠 Portföy</div><div class="filters"><button class="btn-primary" onclick="openPropertyForm()">+ Yeni İlan Ekle</button></div></div><table><thead><tr><th>İlan</th><th>Tip</th><th>Bölge</th><th>Oda</th><th>m²</th><th>Fiyat</th><th>Durum</th><th>Açıklama</th></tr></thead><tbody>`;
   allProperties.forEach(p=>h+=`<tr><td><b>${esc(p.title)}</b></td><td>${esc(p.listing_type)}</td><td>${esc([p.district,p.neighborhood].filter(Boolean).join(' / '))}</td><td>${esc(p.room_count)}</td><td>${p.square_meters||'—'}</td><td>${money(p.price)}</td><td><span class="badge" style="background:#34c97e18;color:var(--green);border:1px solid #34c97e35">${esc(p.status)}</span></td><td><div class="summary-cell">${esc(p.description)}</div></td></tr>`);
   document.getElementById('content').innerHTML=h+`</tbody></table></div>`;
+}
+
+function openPropertyForm(){
+  document.getElementById('modal-title').textContent='Yeni İlan Ekle';
+  document.getElementById('modal-meta').innerHTML='Portföy kaydı Supabase properties tablosuna eklenecek';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-grid">
+      <div class="full"><label>İlan Başlığı</label><input id="p-title" placeholder="Ankara Yeni Batı 3+1 Satılık Daire"/></div>
+      <div><label>İlan Tipi</label><select id="p-listing"><option value="SATIN_ALMA">Satılık</option><option value="KIRA">Kiralık</option></select></div>
+      <div><label>Mülk Tipi</label><select id="p-type"><option value="daire">Daire</option><option value="villa">Villa</option><option value="arsa">Arsa</option><option value="ofis">Ofis</option></select></div>
+      <div><label>İl / Bölge</label><input id="p-district" placeholder="Ankara"/></div>
+      <div><label>Mahalle</label><input id="p-neighborhood" placeholder="Yeni Batı Mahallesi"/></div>
+      <div><label>Oda Sayısı</label><input id="p-room" placeholder="3+1"/></div>
+      <div><label>Fiyat</label><input id="p-price" type="number" placeholder="4500000"/></div>
+      <div><label>m²</label><input id="p-sqm" type="number" placeholder="135"/></div>
+      <div><label>Kat</label><input id="p-floor" placeholder="5. Kat"/></div>
+      <div class="full"><label>Açıklama</label><textarea id="p-desc" placeholder="İlan açıklaması"></textarea></div>
+      <div class="full"><label>Danışman Notu</label><textarea id="p-note" placeholder="Hangi leadlere önerilsin?"></textarea></div>
+      <div class="full" style="display:flex;gap:10px;justify-content:flex-end"><button class="btn-detail" onclick="closeModal()">Vazgeç</button><button class="btn-primary" onclick="createProperty()">İlanı Kaydet</button></div>
+    </div>`;
+  document.getElementById('modal-overlay').classList.add('show');
+}
+
+async function createProperty(){
+  const payload={
+    title:document.getElementById('p-title').value.trim(),
+    listing_type:document.getElementById('p-listing').value,
+    property_type:document.getElementById('p-type').value,
+    district:document.getElementById('p-district').value.trim(),
+    neighborhood:document.getElementById('p-neighborhood').value.trim(),
+    room_count:document.getElementById('p-room').value.trim(),
+    price:Number(document.getElementById('p-price').value||0),
+    square_meters:Number(document.getElementById('p-sqm').value||0),
+    floor:document.getElementById('p-floor').value.trim(),
+    description:document.getElementById('p-desc').value.trim(),
+    contact_note:document.getElementById('p-note').value.trim(),
+    status:'active',
+    currency:'TRY'
+  };
+  if(!payload.title){alert('İlan başlığı zorunlu');return}
+  const res=await fetch(`${SUPABASE_URL}/rest/v1/properties`,{
+    method:'POST',
+    headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json',Prefer:'return=representation'},
+    body:JSON.stringify(payload)
+  });
+  if(!res.ok){alert('İlan eklenemedi: '+await res.text());return}
+  closeModal();
+  await loadAll();
+  currentPage='properties';
+  renderProperties();
 }
 
 function matchProperties(l){
   return allProperties.filter(p=>{
     let score=0;
     if(l.intent&&p.listing_type===l.intent)score+=3;
-    const area=((l.district||'')+' '+(p.district||'')+' '+(p.neighborhood||'')).toLowerCase();
-    if(l.district&&area.includes(String(l.district).toLowerCase().split(' ')[0]))score+=2;
+    const leadArea=String(l.district||'').toLowerCase();
+    const propArea=String((p.district||'')+' '+(p.neighborhood||'')).toLowerCase();
+    if(leadArea&&propArea.includes(leadArea.split(' ')[0]))score+=2;
     if(l.room_count&&p.room_count===l.room_count)score+=2;
     return score>=3;
   }).slice(0,5);
