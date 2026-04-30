@@ -16,33 +16,13 @@ function safeJsonParse(text) {
   } catch {
     const match = text?.match(/\{[\s\S]*\}/);
     if (!match) return null;
+
     try {
       return JSON.parse(match[0]);
     } catch {
       return null;
     }
   }
-}
-
-function normalizeAnalysis(raw) {
-  return {
-    caller_name: raw?.caller_name || null,
-    intent: raw?.intent || 'BILGI',
-    lead_score: Number.isFinite(Number(raw?.lead_score))
-      ? Math.max(0, Math.min(100, Number(raw.lead_score)))
-      : 30,
-    summary: raw?.summary || 'Çağrı kaydedildi, AI özeti üretilemedi.',
-    status: raw?.status || (raw?.slots?.appointment_requested ? 'randevu_alindi' : 'bilgi_verildi'),
-    slots: {
-      district: raw?.slots?.district || null,
-      room_count: raw?.slots?.room_count || null,
-      budget: raw?.slots?.budget || null,
-      property_type: raw?.slots?.property_type || null,
-      appointment_requested: Boolean(raw?.slots?.appointment_requested),
-      preferred_time: raw?.slots?.preferred_time || null,
-      urgency: raw?.slots?.urgency || null,
-    },
-  };
 }
 
 function messagesToPlainText(messages, fallbackTranscript = '') {
@@ -59,6 +39,31 @@ function messagesToPlainText(messages, fallbackTranscript = '') {
     .join('\n');
 }
 
+function normalizeAnalysis(raw) {
+  const score = Number(raw?.lead_score);
+
+  return {
+    caller_name: raw?.caller_name || null,
+    intent: raw?.intent || 'BILGI',
+    lead_score: Number.isFinite(score)
+      ? Math.max(0, Math.min(100, score))
+      : 30,
+    summary: raw?.summary || 'Çağrı kaydedildi, AI özeti üretilemedi.',
+    status:
+      raw?.status ||
+      (raw?.slots?.appointment_requested ? 'randevu_alindi' : 'bilgi_verildi'),
+    slots: {
+      district: raw?.slots?.district || null,
+      room_count: raw?.slots?.room_count || null,
+      budget: raw?.slots?.budget || null,
+      property_type: raw?.slots?.property_type || null,
+      appointment_requested: Boolean(raw?.slots?.appointment_requested),
+      preferred_time: raw?.slots?.preferred_time || null,
+      urgency: raw?.slots?.urgency || null,
+    },
+  };
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(200).json({
@@ -70,7 +75,10 @@ export default async function handler(req, res) {
   const msg = req.body?.message;
 
   if (!msg || msg.type !== 'end-of-call-report') {
-    return res.status(200).json({ received: true, ignored: true });
+    return res.status(200).json({
+      received: true,
+      ignored: true,
+    });
   }
 
   const messages = msg.artifact?.messages || [];
@@ -82,6 +90,13 @@ export default async function handler(req, res) {
   let analysis = normalizeAnalysis(null);
 
   try {
+    const todayTR = new Date().toLocaleDateString('tr-TR', {
+      timeZone: 'Europe/Istanbul',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+
     const completion = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 700,
@@ -93,6 +108,9 @@ Sen bir emlak ofisi çağrı analiz motorusun.
 
 Aşağıdaki çağrı transkriptini analiz et.
 Sadece geçerli JSON döndür. Markdown, açıklama veya ek metin yazma.
+
+Bugünün tarihi: ${todayTR}
+Timezone: Europe/Istanbul
 
 JSON formatı:
 {
@@ -118,6 +136,8 @@ Kurallar:
 - Evini satmak istiyorsa intent SATIS.
 - Sadece soru soruyorsa intent BILGI.
 - Randevu, görüşme, ofise gelme, danışman arasın gibi ifade varsa appointment_requested true.
+- preferred_time varsa ISO formatında döndür: YYYY-MM-DDTHH:mm:ss+03:00
+- "yarın 14:30" gibi ifadeleri bugünün tarihine göre ISO tarihe çevir.
 - Lead score 75+ sıcak, 45-74 orta, 0-44 düşük.
 - Transkript anlamsızsa intent BILGI, lead_score 10-30 arası ver.
 
@@ -132,7 +152,7 @@ ${transcriptText}
     const parsed = safeJsonParse(rawText);
     analysis = normalizeAnalysis(parsed);
   } catch (e) {
-    console.log('Anthropic error:', e.message);
+    console.log('Anthropic error:', e?.message || e);
   }
 
   let insertedCall = null;
@@ -159,29 +179,32 @@ ${transcriptText}
     if (error) throw error;
     insertedCall = data;
   } catch (e) {
-    console.log('Supabase calls insert error:', e.message);
+    console.log('Supabase calls insert error:', e?.message || e);
+
     return res.status(500).json({
       success: false,
       error: 'calls_insert_failed',
-      detail: e.message,
+      detail: e?.message || String(e),
     });
   }
 
   if (analysis.slots?.appointment_requested && insertedCall) {
     try {
-      await supabase.from('appointments').insert({
+      const { error } = await supabase.from('appointments').insert({
         call_id: insertedCall.id,
         tenant_id: insertedCall.tenant_id || null,
         client_name: analysis.caller_name || 'Bilinmeyen Müşteri',
         client_phone: insertedCall.caller_phone,
-        scheduled_at: null,
+        scheduled_at: analysis.slots?.preferred_time || null,
         status: 'talep_alindi',
         appointment_type: analysis.intent,
         notes: analysis.summary,
         source: 'ai_call',
       });
+
+      if (error) throw error;
     } catch (e) {
-      console.log('Supabase appointments insert error:', e.message);
+      console.log('Supabase appointments insert error:', e?.message || e);
     }
   }
 
