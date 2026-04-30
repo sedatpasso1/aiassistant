@@ -7,377 +7,169 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#07070e;--card:#0f0f1a;--hover:#151523;--border:#1a1a2d;
-  --gold:#c8a84b;--green:#34c97e;--red:#f16b6b;--blue:#5b9cf6;
-  --purple:#9b7ff4;--text:#eaeaf5;--muted:#6f6f8d;--dim:#252538
-}
+:root{--bg:#07070e;--card:#0f0f1a;--hover:#151523;--border:#1a1a2d;--gold:#c8a84b;--green:#34c97e;--red:#f16b6b;--blue:#5b9cf6;--purple:#9b7ff4;--text:#eaeaf5;--muted:#737397}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
-@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.fadein{animation:fadein .25s ease}
-
 #config-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
-.config-box{width:100%;max-width:440px}
-.config-logo{text-align:center;margin-bottom:32px}
-.config-logo .icon{font-size:44px;margin-bottom:12px}
-.config-logo h1{font-family:'Playfair Display',serif;font-size:34px;font-weight:900;color:var(--gold)}
-.config-logo p{color:var(--muted);font-size:14px;margin-top:6px}
+.config-box{width:100%;max-width:440px}.config-logo{text-align:center;margin-bottom:28px}.config-logo .icon{font-size:44px}.config-logo h1{font-family:'Playfair Display',serif;font-size:34px;color:var(--gold)}
 .config-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px}
 .config-card label{color:var(--muted);font-size:12px;display:block;margin-bottom:8px}
-.config-card input{width:100%;padding:12px 14px;background:var(--hover);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:monospace;outline:none;margin-bottom:16px}
-.config-card input:focus{border-color:var(--gold)}
-.btn-connect{width:100%;background:var(--gold);color:#000;border:none;border-radius:10px;padding:13px;font-weight:800;font-size:15px;cursor:pointer}
-.btn-connect:disabled{background:var(--dim);color:var(--muted)}
-.config-hint{margin-top:16px;padding:12px;background:var(--hover);border-radius:8px;color:var(--muted);font-size:11px;line-height:1.6}
-.err{color:var(--red);font-size:12px;margin-bottom:12px;padding:8px 12px;background:rgba(241,107,107,.1);border-radius:8px}
-
-#app{display:none;min-height:100vh}
-.sidebar{width:220px;flex-shrink:0;background:var(--card);border-right:1px solid var(--border);padding:0 12px;display:flex;flex-direction:column}
-.sidebar-logo{padding:22px 12px 16px;border-bottom:1px solid var(--border)}
-.sidebar-logo h2{font-family:'Playfair Display',serif;font-weight:900;font-size:20px;color:var(--gold)}
-.sidebar-logo small{color:var(--muted);font-size:10px}
-.tenant-card{padding:12px;background:var(--hover);border-radius:12px;border:1px solid var(--border);margin:14px 0 16px}
-.tenant-card .name{color:var(--gold);font-size:13px;font-weight:700}
-.tenant-card .sub{color:var(--muted);font-size:11px;margin-top:3px}
-.tenant-status{display:flex;gap:6px;align-items:center;margin-top:8px}
-.dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite}
-.tenant-status span{color:var(--green);font-size:10px}
-.nav-item{padding:11px 12px;border-radius:9px;margin-bottom:3px;color:var(--muted);font-size:13px;display:flex;gap:8px;align-items:center;cursor:pointer;border:1px solid transparent}
-.nav-item.active{background:rgba(200,168,75,.15);color:var(--gold);border-color:rgba(200,168,75,.3);font-weight:800}
-.sidebar-footer{padding:12px 0;border-top:1px solid var(--border);margin-top:auto}
-.btn-disconnect{width:100%;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:8px;font-size:12px;cursor:pointer}
-
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.topbar{padding:14px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(15,15,26,.8)}
-.topbar h2{font-family:'Playfair Display',serif;font-weight:900;font-size:22px}
-.topbar small{color:var(--muted);font-size:12px}
-.live-indicator{display:flex;gap:8px;align-items:center}
-.live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s infinite}
-.live-indicator span{color:var(--muted);font-size:12px}
-.content{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:20px}
-
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 22px;position:relative;overflow:hidden}
-.stat-card .stat-icon{position:absolute;right:16px;top:14px;font-size:22px;opacity:.12}
-.stat-label{color:var(--muted);font-size:10px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px}
-.stat-value{font-family:'Playfair Display',serif;font-size:34px;font-weight:900;line-height:1}
-.stat-sub{color:var(--muted);font-size:12px;margin-top:6px}
-
-.table-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
-.table-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.table-header .title{display:flex;align-items:center;gap:8px;color:var(--text);font-weight:800}
-.update-time{color:var(--muted);font-size:11px}
-.filters{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
-.filter-btn,.btn-refresh{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 11px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif}
-.filter-btn.active{font-weight:800;border-color:var(--gold);color:var(--gold)}
-.empty{padding:60px;text-align:center;color:var(--muted)}
-.empty-icon{font-size:32px;margin-bottom:12px}
-table{width:100%;border-collapse:collapse}
-thead tr{border-bottom:1px solid var(--border)}
-th{padding:10px 16px;text-align:left;color:var(--muted);font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;white-space:nowrap}
-tbody tr{border-bottom:1px solid var(--border);cursor:pointer}
-tbody tr:hover{background:var(--hover)}
-td{padding:13px 16px;font-size:13px;vertical-align:top}
-.badge{display:inline-block;border-radius:5px;padding:3px 8px;font-size:11px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap}
-.score-ring{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900}
-.summary-cell{color:var(--muted);font-size:12px;line-height:1.45;max-width:320px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.config-card input{width:100%;padding:12px 14px;background:var(--hover);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:monospace;margin-bottom:16px}
+.btn-connect{width:100%;background:var(--gold);color:#000;border:none;border-radius:10px;padding:13px;font-weight:800;cursor:pointer}.err{color:var(--red);font-size:12px;margin-bottom:12px}
+#app{display:none;min-height:100vh}.sidebar{width:220px;background:var(--card);border-right:1px solid var(--border);padding:0 12px;display:flex;flex-direction:column}
+.sidebar-logo{padding:22px 12px 16px;border-bottom:1px solid var(--border)}.sidebar-logo h2{font-family:'Playfair Display',serif;color:var(--gold)}.sidebar-logo small{color:var(--muted)}
+.tenant-card{padding:12px;background:var(--hover);border:1px solid var(--border);border-radius:12px;margin:14px 0}.tenant-card .name{color:var(--gold);font-weight:800}.tenant-card .sub{color:var(--muted);font-size:11px}
+.nav-item{padding:11px 12px;border-radius:9px;margin-bottom:3px;color:var(--muted);font-size:13px;cursor:pointer;border:1px solid transparent}.nav-item.active{background:rgba(200,168,75,.15);color:var(--gold);border-color:rgba(200,168,75,.3);font-weight:800}
+.btn-disconnect{width:100%;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:8px;font-size:12px;cursor:pointer}.sidebar-footer{margin-top:auto;padding:12px 0;border-top:1px solid var(--border)}
+.main{flex:1;display:flex;flex-direction:column}.topbar{padding:14px 28px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;background:rgba(15,15,26,.8)}
+.topbar h2{font-family:'Playfair Display',serif;font-size:22px}.topbar small{color:var(--muted)}
+.content{padding:24px;display:flex;flex-direction:column;gap:20px;overflow:auto}.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}.stat-label{color:var(--muted);font-size:10px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px}.stat-value{font-family:'Playfair Display',serif;font-size:32px;font-weight:900}.stat-sub{color:var(--muted);font-size:12px;margin-top:6px}
+.table-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}.table-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}.title{font-weight:800}.filters{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.filter-btn,.btn-refresh{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 11px;cursor:pointer;font-size:12px}.filter-btn.active{border-color:var(--gold);color:var(--gold);font-weight:800}
+table{width:100%;border-collapse:collapse}th{padding:10px 16px;text-align:left;color:var(--muted);font-size:10px;letter-spacing:.1em;text-transform:uppercase}td{padding:13px 16px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:top}tr:hover{background:var(--hover)}
+.badge{display:inline-block;border-radius:5px;padding:3px 8px;font-size:11px;font-weight:800;text-transform:uppercase}.summary-cell{color:var(--muted);font-size:12px;line-height:1.45;max-width:340px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.score-ring{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900}.empty{padding:60px;text-align:center;color:var(--muted)}
 .btn-detail{background:transparent;border:1px solid var(--border);border-radius:6px;padding:5px 12px;color:var(--muted);font-size:12px;cursor:pointer}
-.error-bar{padding:12px 20px;background:rgba(241,107,107,.1);color:var(--red);font-size:13px;border-bottom:1px solid var(--border)}
-
-#modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:1000;align-items:center;justify-content:center;padding:24px}
-#modal-overlay.show{display:flex}
-.modal{background:var(--card);border:1px solid var(--border);border-radius:18px;width:100%;max-width:720px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden}
-.modal-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start}
-.modal-phone{color:var(--text);font-weight:800;font-size:17px;margin-bottom:4px}
-.modal-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.btn-close{background:var(--hover);border:1px solid var(--border);border-radius:8px;padding:6px 14px;cursor:pointer;color:var(--muted);font-size:20px;line-height:1}
-.modal-summary{padding:14px 24px;background:rgba(200,168,75,.08);border-bottom:1px solid var(--border)}
-.modal-summary .label{color:var(--muted);font-size:10px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
-.modal-summary p{font-size:13px;line-height:1.6}
-.modal-slots{padding:12px 24px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap}
-.slot-tag{background:var(--hover);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px}
-.slot-key{color:var(--muted)}.slot-val{color:var(--green);font-weight:700}
-.transcript{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:12px}
-.msg{display:flex;gap:10px;align-items:flex-start}
-.msg-avatar{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800}
-.msg-text{font-size:13px;line-height:1.6;padding-top:4px;flex:1}
-@media(max-width:900px){.stats-grid{grid-template-columns:repeat(2,1fr)}.sidebar{width:190px}.content{padding:16px}}
+#modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:999;align-items:center;justify-content:center;padding:24px}#modal-overlay.show{display:flex}.modal{background:var(--card);border:1px solid var(--border);border-radius:18px;width:100%;max-width:760px;max-height:88vh;overflow:auto}.modal-header{padding:20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between}.modal-body{padding:20px}.msg{display:flex;gap:10px;margin-bottom:12px}.msg-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800}.msg-text{font-size:13px;line-height:1.6}.btn-close{background:var(--hover);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:20px;padding:4px 12px;cursor:pointer}
+@media(max-width:1100px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
 
 <div id="config-screen">
   <div class="config-box">
-    <div class="config-logo">
-      <div class="icon">🏛️</div>
-      <h1>VoiceEstate</h1>
-      <p>Supabase bağlantını gir</p>
-    </div>
+    <div class="config-logo"><div class="icon">🏛️</div><h1>VoiceEstate</h1><p style="color:var(--muted)">Supabase bağlantını gir</p></div>
     <div class="config-card">
-      <label>Supabase Project URL</label>
-      <input type="text" id="inp-url" placeholder="https://xxxxx.supabase.co"/>
-      <label>Anon Public Key</label>
-      <input type="password" id="inp-key" placeholder="eyJhbGciOiJIUzI1NiIs..."/>
+      <label>Supabase Project URL</label><input id="inp-url" placeholder="https://xxxxx.supabase.co"/>
+      <label>Anon Public Key</label><input id="inp-key" type="password" placeholder="eyJ..."/>
       <div id="config-err" class="err" style="display:none"></div>
-      <button class="btn-connect" id="btn-connect" onclick="connect()">Bağlan & Dashboard'u Aç</button>
-      <div class="config-hint">
-        Demo için anon public key kullanılır. SaaS aşamasında auth + tenant sistemi eklenecek.
-      </div>
+      <button class="btn-connect" onclick="connect()">Bağlan & Dashboard'u Aç</button>
     </div>
   </div>
 </div>
 
 <div id="app">
   <div class="sidebar">
-    <div class="sidebar-logo">
-      <h2>VoiceEstate</h2>
-      <small>AI Call Platform</small>
-    </div>
+    <div class="sidebar-logo"><h2>VoiceEstate</h2><small>AI Call Platform</small></div>
     <div style="padding:12px 0;flex:1">
-      <div class="tenant-card">
-        <div class="name">Atlas Gayrimenkul</div>
-        <div class="sub">Emlak · Ankara</div>
-        <div class="tenant-status"><div class="dot"></div><span>Sistem Aktif</span></div>
-      </div>
+      <div class="tenant-card"><div class="name">Atlas Gayrimenkul</div><div class="sub">Emlak · Ankara</div></div>
       <div class="nav-item active" onclick="setPage('dashboard',this)">📊 Dashboard</div>
       <div class="nav-item" onclick="setPage('calls',this)">📞 Çağrılar</div>
       <div class="nav-item" onclick="setPage('leads',this)">🔥 Leadler</div>
       <div class="nav-item" onclick="setPage('appointments',this)">📅 Randevular</div>
       <div class="nav-item" onclick="setPage('properties',this)">🏠 Portföy</div>
+      <div class="nav-item" onclick="setPage('matches',this)">🎯 Eşleşmeler</div>
       <div class="nav-item" onclick="setPage('settings',this)">⚙️ Ayarlar</div>
     </div>
-    <div class="sidebar-footer">
-      <button class="btn-disconnect" onclick="disconnect()">🔌 Bağlantıyı Değiştir</button>
-    </div>
+    <div class="sidebar-footer"><button class="btn-disconnect" onclick="disconnect()">🔌 Bağlantıyı Değiştir</button></div>
   </div>
-
   <div class="main">
-    <div class="topbar">
-      <div>
-        <h2 id="page-title">Dashboard</h2>
-        <small id="topbar-date"></small>
-      </div>
-      <div class="live-indicator">
-        <div class="live-dot"></div>
-        <span>15sn'de bir yenileniyor</span>
-      </div>
-    </div>
+    <div class="topbar"><div><h2 id="page-title">Dashboard</h2><small id="topbar-date"></small></div><small>15sn'de bir yenileniyor</small></div>
     <div class="content" id="content"></div>
   </div>
 </div>
 
 <div id="modal-overlay" onclick="closeModal()">
   <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-header">
-      <div>
-        <div class="modal-phone" id="modal-phone"></div>
-        <div class="modal-meta" id="modal-meta"></div>
-      </div>
-      <div style="display:flex;gap:10px;align-items:center">
-        <div class="score-ring" id="modal-score"></div>
-        <button class="btn-close" onclick="closeModal()">×</button>
-      </div>
-    </div>
-    <div class="modal-summary" id="modal-summary" style="display:none">
-      <div class="label">AI Özeti</div>
-      <p id="modal-summary-text"></p>
-    </div>
-    <div class="modal-slots" id="modal-slots" style="display:none"></div>
-    <div class="transcript" id="modal-transcript"></div>
+    <div class="modal-header"><div><b id="modal-title"></b><div id="modal-meta" style="margin-top:8px"></div></div><button class="btn-close" onclick="closeModal()">×</button></div>
+    <div class="modal-body" id="modal-body"></div>
   </div>
 </div>
 
 <script>
-let SUPABASE_URL='';
-let SUPABASE_KEY='';
-let allCalls=[];
-let allAppointments=[];
-let allLeads=[];
-let currentFilter='ALL';
-let currentPage='dashboard';
-let refreshTimer=null;
+let SUPABASE_URL='',SUPABASE_KEY='',allCalls=[],allAppointments=[],allLeads=[],allProperties=[],currentPage='dashboard',currentFilter='ALL',refreshTimer=null;
 
-const INTENT={
-  SATIN_ALMA:{label:'Satın Alma',color:'#34c97e',emoji:'🏠'},
-  KIRA:{label:'Kiralama',color:'#5b9cf6',emoji:'🔑'},
-  SATIS:{label:'Satış',color:'#c8a84b',emoji:'💰'},
-  BILGI:{label:'Bilgi',color:'#9b7ff4',emoji:'💬'}
-};
+const INTENT={SATIN_ALMA:{label:'Satın Alma',color:'#34c97e',emoji:'🏠'},KIRA:{label:'Kiralama',color:'#5b9cf6',emoji:'🔑'},SATIS:{label:'Satış',color:'#c8a84b',emoji:'💰'},BILGI:{label:'Bilgi',color:'#9b7ff4',emoji:'💬'}};
 
-function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m]))}
-function fmtDuration(s){if(!s)return '—';return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`}
-function fmtTime(ts){if(!ts)return '—';return new Date(ts).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})}
-function fmtDate(ts){if(!ts)return '—';const d=new Date(ts),t=new Date();if(d.toDateString()===t.toDateString())return 'Bugün';return d.toLocaleDateString('tr-TR',{day:'numeric',month:'short'})}
-function scoreColor(score){return score>=75?'#34c97e':score>=45?'#c8a84b':'#f16b6b'}
-function tempLabel(t){return t==='hot'?'Sıcak':t==='warm'?'Ilık':'Soğuk'}
+function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function money(v){return v?Number(v).toLocaleString('tr-TR')+' ₺':'—'}
+function fmtDate(ts){return ts?new Date(ts).toLocaleString('tr-TR'):'—'}
+function scoreColor(s){return s>=75?'#34c97e':s>=45?'#c8a84b':'#f16b6b'}
+function temp(t,s){return t==='hot'||s>=75?'Sıcak':t==='warm'||s>=45?'Ilık':'Soğuk'}
 
 async function connect(){
-  const url=document.getElementById('inp-url').value.trim();
-  const key=document.getElementById('inp-key').value.trim();
-  const err=document.getElementById('config-err');
-  const btn=document.getElementById('btn-connect');
-  if(!url||!key)return;
-  btn.textContent='Bağlanıyor...';btn.disabled=true;err.style.display='none';
+  const url=document.getElementById('inp-url').value.trim(),key=document.getElementById('inp-key').value.trim(),err=document.getElementById('config-err');
   try{
     const res=await fetch(`${url}/rest/v1/calls?select=id&limit=1`,{headers:{apikey:key,Authorization:`Bearer ${key}`}});
     if(!res.ok)throw new Error(await res.text());
-    SUPABASE_URL=url;SUPABASE_KEY=key;
-    localStorage.setItem('ve_url',url);localStorage.setItem('ve_key',key);
-    showApp();
-  }catch(e){
-    err.textContent='Bağlantı hatası: '+e.message;err.style.display='block';
-    btn.textContent="Bağlan & Dashboard'u Aç";btn.disabled=false;
-  }
+    SUPABASE_URL=url;SUPABASE_KEY=key;localStorage.setItem('ve_url',url);localStorage.setItem('ve_key',key);showApp();
+  }catch(e){err.textContent='Bağlantı hatası: '+e.message;err.style.display='block'}
 }
-function disconnect(){clearInterval(refreshTimer);localStorage.removeItem('ve_url');localStorage.removeItem('ve_key');location.reload()}
-function showApp(){
-  document.getElementById('config-screen').style.display='none';
-  document.getElementById('app').style.display='flex';
-  document.getElementById('topbar-date').textContent=new Date().toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long'});
-  loadAll();
-  refreshTimer=setInterval(loadAll,15000);
-}
-async function loadAll(){await Promise.all([loadCalls(),loadAppointments(),loadLeads()]);renderPage()}
-async function loadCalls(){
-  const res=await fetch(`${SUPABASE_URL}/rest/v1/calls?select=*&order=created_at.desc&limit=200`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}});
-  allCalls=res.ok?await res.json():[];
-}
-async function loadAppointments(){
-  const res=await fetch(`${SUPABASE_URL}/rest/v1/appointments?select=*&order=created_at.desc&limit=200`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}});
-  allAppointments=res.ok?await res.json():[];
-}
-async function loadLeads(){
-  const res=await fetch(`${SUPABASE_URL}/rest/v1/leads?select=*&order=updated_at.desc&limit=200`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}});
-  allLeads=res.ok?await res.json():[];
-}
+function disconnect(){localStorage.removeItem('ve_url');localStorage.removeItem('ve_key');location.reload()}
+function showApp(){document.getElementById('config-screen').style.display='none';document.getElementById('app').style.display='flex';document.getElementById('topbar-date').textContent=new Date().toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long'});loadAll();refreshTimer=setInterval(loadAll,15000)}
+async function sb(path){const r=await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}});return r.ok?await r.json():[]}
+async function loadAll(){[allCalls,allAppointments,allLeads,allProperties]=await Promise.all([sb('calls?select=*&order=created_at.desc&limit=200'),sb('appointments?select=*&order=created_at.desc&limit=200'),sb('leads?select=*&order=updated_at.desc&limit=200'),sb('properties?select=*&order=created_at.desc&limit=200')]);renderPage()}
 
-function setPage(page,el){
-  currentPage=page;
-  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
-  el.classList.add('active');
-  renderPage();
-}
-function renderPage(){
-  const titles={dashboard:'Dashboard',calls:'Çağrılar',leads:'Leadler',appointments:'Randevular',properties:'Portföy',settings:'Ayarlar'};
-  document.getElementById('page-title').textContent=titles[currentPage]||'Dashboard';
-  if(currentPage==='dashboard')renderDashboard();
-  if(currentPage==='calls')renderCallsPage();
-  if(currentPage==='leads')renderLeadsPage();
-  if(currentPage==='appointments')renderAppointmentsPage();
-  if(currentPage==='properties')renderPlaceholder('🏠 Portföy','İlan/portföy yönetimi sonraki geliştirme adımı.');
-  if(currentPage==='settings')renderSettings();
-}
-function statCards(){
-  const today=new Date().toDateString();
-  const todayCalls=allCalls.filter(c=>new Date(c.created_at).toDateString()===today);
-  const appts=allAppointments.length;
-  const hot=allLeads.filter(l=>l.temperature==='hot'||(l.lead_score||0)>=75).length;
+function setPage(p,el){currentPage=p;document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));el.classList.add('active');renderPage()}
+function renderPage(){document.getElementById('page-title').textContent={dashboard:'Dashboard',calls:'Çağrılar',leads:'Leadler',appointments:'Randevular',properties:'Portföy',matches:'Eşleşmeler',settings:'Ayarlar'}[currentPage];if(currentPage==='dashboard')renderDashboard();if(currentPage==='calls')renderCalls();if(currentPage==='leads')renderLeads();if(currentPage==='appointments')renderAppointments();if(currentPage==='properties')renderProperties();if(currentPage==='matches')renderMatches();if(currentPage==='settings')renderSettings()}
+
+function stats(){
+  const hot=allLeads.filter(l=>(l.lead_score||0)>=75).length;
   const avg=allCalls.length?Math.round(allCalls.reduce((a,c)=>a+(c.lead_score||0),0)/allCalls.length):0;
-  return `
-  <div class="stats-grid">
-    <div class="stat-card" style="border-top:2px solid var(--gold)"><div class="stat-icon">📞</div><div class="stat-label">Toplam Çağrı</div><div class="stat-value" style="color:var(--gold)">${allCalls.length}</div><div class="stat-sub">Bugün: ${todayCalls.length}</div></div>
-    <div class="stat-card" style="border-top:2px solid var(--green)"><div class="stat-icon">📅</div><div class="stat-label">Randevu</div><div class="stat-value" style="color:var(--green)">${appts}</div><div class="stat-sub">AI tarafından oluşturuldu</div></div>
-    <div class="stat-card" style="border-top:2px solid var(--red)"><div class="stat-icon">🔥</div><div class="stat-label">Sıcak Lead</div><div class="stat-value" style="color:var(--red)">${hot}</div><div class="stat-sub">Skor ≥ 75</div></div>
-    <div class="stat-card" style="border-top:2px solid var(--purple)"><div class="stat-icon">⚡</div><div class="stat-label">Ort. Lead Skoru</div><div class="stat-value" style="color:var(--purple)">${avg}</div><div class="stat-sub">0-100</div></div>
+  return `<div class="stats-grid">
+    <div class="stat-card" style="border-top:2px solid var(--gold)"><div class="stat-label">Toplam Çağrı</div><div class="stat-value" style="color:var(--gold)">${allCalls.length}</div><div class="stat-sub">AI çağrı kaydı</div></div>
+    <div class="stat-card" style="border-top:2px solid var(--red)"><div class="stat-label">Sıcak Lead</div><div class="stat-value" style="color:var(--red)">${hot}</div><div class="stat-sub">Skor ≥ 75</div></div>
+    <div class="stat-card" style="border-top:2px solid var(--green)"><div class="stat-label">Randevu</div><div class="stat-value" style="color:var(--green)">${allAppointments.length}</div><div class="stat-sub">AI oluşturdu</div></div>
+    <div class="stat-card" style="border-top:2px solid var(--blue)"><div class="stat-label">Portföy</div><div class="stat-value" style="color:var(--blue)">${allProperties.length}</div><div class="stat-sub">Aktif ilan</div></div>
+    <div class="stat-card" style="border-top:2px solid var(--purple)"><div class="stat-label">Ort. Skor</div><div class="stat-value" style="color:var(--purple)">${avg}</div><div class="stat-sub">0-100</div></div>
   </div>`;
 }
-function renderDashboard(){
-  document.getElementById('content').innerHTML=statCards()+callsTable(allCalls.slice(0,8),'Son Çağrılar')+appointmentsTable(allAppointments.slice(0,6),'Yaklaşan/Talep Randevular');
-}
-function renderCallsPage(){document.getElementById('content').innerHTML=statCards()+callsTable(filteredCalls(),'Çağrılar',true)}
-function filteredCalls(){return currentFilter==='ALL'?allCalls:allCalls.filter(c=>c.intent===currentFilter)}
-function setFilter(f,btn){currentFilter=f;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderCallsPage()}
+
+function renderDashboard(){document.getElementById('content').innerHTML=stats()+callsTable(allCalls.slice(0,8),'Son Çağrılar')+appointmentsTable(allAppointments.slice(0,6),'Son Randevular')}
+function renderCalls(){document.getElementById('content').innerHTML=stats()+callsTable(currentFilter==='ALL'?allCalls:allCalls.filter(c=>c.intent===currentFilter),'Çağrılar',true)}
+function setFilter(f,b){currentFilter=f;renderCalls()}
 
 function callsTable(rows,title,filters=false){
-  let filterHtml=filters?`<div class="filters">
-    <button class="filter-btn ${currentFilter==='ALL'?'active':''}" onclick="setFilter('ALL',this)">Tümü</button>
-    <button class="filter-btn ${currentFilter==='SATIN_ALMA'?'active':''}" onclick="setFilter('SATIN_ALMA',this)">🏠 Satın Alma</button>
-    <button class="filter-btn ${currentFilter==='KIRA'?'active':''}" onclick="setFilter('KIRA',this)">🔑 Kiralama</button>
-    <button class="filter-btn ${currentFilter==='SATIS'?'active':''}" onclick="setFilter('SATIS',this)">💰 Satış</button>
-    <button class="filter-btn ${currentFilter==='BILGI'?'active':''}" onclick="setFilter('BILGI',this)">💬 Bilgi</button>
-    <button class="btn-refresh" onclick="loadAll()">🔄</button></div>`:'';
-  if(!rows.length)return `<div class="table-card"><div class="table-header"><div class="title">${title}</div>${filterHtml}</div><div class="empty"><div class="empty-icon">📭</div>Kayıt yok.</div></div>`;
-  let html=`<div class="table-card"><div class="table-header"><div class="title"><div class="dot"></div>${title}<span class="update-time">· ${fmtTime(new Date())}</span></div>${filterHtml}</div><div style="overflow-x:auto"><table><thead><tr><th>Tarih</th><th>Numara</th><th>Süre</th><th>Intent</th><th>Özet</th><th>Durum</th><th>Skor</th><th></th></tr></thead><tbody>`;
-  rows.forEach((c,i)=>{
-    const intent=INTENT[c.intent]||INTENT.BILGI,sc=c.lead_score||0,col=scoreColor(sc);
-    html+=`<tr onclick="openModal('${c.id}')">
-      <td><div style="color:var(--muted);font-size:11px">${fmtDate(c.created_at)}</div><div>${fmtTime(c.created_at)}</div></td>
-      <td style="font-family:monospace">${esc(c.caller_phone||'—')}</td>
-      <td style="color:var(--muted)">${fmtDuration(c.duration_seconds)}</td>
-      <td><span class="badge" style="background:${intent.color}18;color:${intent.color};border:1px solid ${intent.color}35">${intent.emoji} ${intent.label}</span></td>
-      <td><div class="summary-cell">${esc(c.summary||'—')}</div></td>
-      <td><span class="badge" style="background:rgba(91,156,246,.12);color:var(--blue);border:1px solid rgba(91,156,246,.35)">${esc(c.status||'—')}</span></td>
-      <td><div class="score-ring" style="border:2.5px solid ${col};color:${col};background:${col}12">${sc}</div></td>
-      <td><button class="btn-detail" onclick="event.stopPropagation();openModal('${c.id}')">Detay</button></td>
-    </tr>`;
-  });
-  html+=`</tbody></table></div></div>`;
-  return html;
+  const f=filters?`<div class="filters"><button class="filter-btn ${currentFilter==='ALL'?'active':''}" onclick="setFilter('ALL',this)">Tümü</button><button class="filter-btn ${currentFilter==='SATIN_ALMA'?'active':''}" onclick="setFilter('SATIN_ALMA',this)">🏠 Satın Alma</button><button class="filter-btn ${currentFilter==='KIRA'?'active':''}" onclick="setFilter('KIRA',this)">🔑 Kiralama</button><button class="filter-btn ${currentFilter==='SATIS'?'active':''}" onclick="setFilter('SATIS',this)">💰 Satış</button><button class="filter-btn ${currentFilter==='BILGI'?'active':''}" onclick="setFilter('BILGI',this)">💬 Bilgi</button></div>`:'';
+  if(!rows.length)return `<div class="table-card"><div class="table-header"><div class="title">${title}</div>${f}</div><div class="empty">Kayıt yok.</div></div>`;
+  let h=`<div class="table-card"><div class="table-header"><div class="title">📞 ${title}</div>${f}</div><table><thead><tr><th>Tarih</th><th>Numara</th><th>Intent</th><th>Özet</th><th>Durum</th><th>Skor</th><th></th></tr></thead><tbody>`;
+  rows.forEach(c=>{const i=INTENT[c.intent]||INTENT.BILGI,col=scoreColor(c.lead_score||0);h+=`<tr><td>${fmtDate(c.created_at)}</td><td style="font-family:monospace">${esc(c.caller_phone)}</td><td><span class="badge" style="background:${i.color}18;color:${i.color};border:1px solid ${i.color}35">${i.emoji} ${i.label}</span></td><td><div class="summary-cell">${esc(c.summary)}</div></td><td><span class="badge" style="background:#5b9cf618;color:var(--blue);border:1px solid #5b9cf635">${esc(c.status)}</span></td><td><div class="score-ring" style="border:2.5px solid ${col};color:${col};background:${col}12">${c.lead_score||0}</div></td><td><button class="btn-detail" onclick="openCall('${c.id}')">Detay</button></td></tr>`});
+  return h+`</tbody></table></div>`;
 }
-function renderLeadsPage(){
-  if(!allLeads.length){document.getElementById('content').innerHTML=`${statCards()}<div class="table-card"><div class="empty"><div class="empty-icon">🔥</div>Henüz lead yok. Yeni çağrı geldikçe otomatik oluşacak.</div></div>`;return}
-  let html=`${statCards()}<div class="table-card"><div class="table-header"><div class="title">🔥 Leadler</div><button class="btn-refresh" onclick="loadAll()">🔄</button></div><div style="overflow-x:auto"><table><thead><tr><th>Müşteri</th><th>Telefon</th><th>Intent</th><th>Skor</th><th>Bölge</th><th>Oda</th><th>Bütçe</th><th>Arama</th><th>Özet</th></tr></thead><tbody>`;
-  allLeads.forEach(l=>{
-    const col=scoreColor(l.lead_score||0);
-    html+=`<tr>
-      <td>${esc(l.name||'Bilinmeyen')}</td>
-      <td style="font-family:monospace">${esc(l.phone)}</td>
-      <td>${esc(l.intent||'—')}</td>
-      <td><span class="badge" style="background:${col}18;color:${col};border:1px solid ${col}35">${tempLabel(l.temperature)} · ${l.lead_score||0}</span></td>
-      <td>${esc(l.district||'—')}</td><td>${esc(l.room_count||'—')}</td><td>${esc(l.budget||'—')}</td>
-      <td>${l.call_count||1}</td>
-      <td><div class="summary-cell">${esc(l.summary||'—')}</div></td>
-    </tr>`;
-  });
-  html+=`</tbody></table></div></div>`;
-  document.getElementById('content').innerHTML=html;
-}
-function appointmentsTable(rows,title){
-  if(!rows.length)return `<div class="table-card"><div class="table-header"><div class="title">${title}</div></div><div class="empty"><div class="empty-icon">📅</div>Henüz randevu yok.</div></div>`;
-  let html=`<div class="table-card"><div class="table-header"><div class="title">📅 ${title}</div><button class="btn-refresh" onclick="loadAll()">🔄</button></div><div style="overflow-x:auto"><table><thead><tr><th>Müşteri</th><th>Telefon</th><th>Tarih</th><th>Tip</th><th>Durum</th><th>Not</th></tr></thead><tbody>`;
-  rows.forEach(a=>{
-    html+=`<tr>
-      <td>${esc(a.client_name||'—')}</td>
-      <td style="font-family:monospace">${esc(a.client_phone||'—')}</td>
-      <td>${a.scheduled_at?new Date(a.scheduled_at).toLocaleString('tr-TR'):'Tarih netleşmedi'}</td>
-      <td>${esc(a.appointment_type||'—')}</td>
-      <td><span class="badge" style="background:rgba(52,201,126,.12);color:var(--green);border:1px solid rgba(52,201,126,.35)">${esc(a.status||'—')}</span></td>
-      <td><div class="summary-cell">${esc(a.notes||'—')}</div></td>
-    </tr>`;
-  });
-  html+=`</tbody></table></div></div>`;
-  return html;
-}
-function renderAppointmentsPage(){document.getElementById('content').innerHTML=appointmentsTable(allAppointments,'Randevular')}
-function renderPlaceholder(title,text){document.getElementById('content').innerHTML=`<div class="table-card"><div class="empty"><div class="empty-icon">${title.split(' ')[0]}</div><h3 style="margin-bottom:8px">${title}</h3><div>${text}</div></div></div>`}
-function renderSettings(){document.getElementById('content').innerHTML=`<div class="table-card"><div class="table-header"><div class="title">⚙️ Ayarlar</div></div><div style="padding:22px;color:var(--muted);line-height:1.8"><b style="color:var(--text)">Bağlantı:</b><br>${esc(SUPABASE_URL)}<br><br>Sonraki adım: tenant ayarları, Vapi assistant prompt, SMS ayarları.</div></div>`}
 
-function openModal(id){
-  const call=allCalls.find(c=>c.id===id);if(!call)return;
-  const intent=INTENT[call.intent]||INTENT.BILGI,sc=call.lead_score||0,col=scoreColor(sc);
-  document.getElementById('modal-phone').textContent=call.caller_phone||'Bilinmiyor';
-  document.getElementById('modal-meta').innerHTML=`<span class="badge" style="background:${intent.color}18;color:${intent.color};border:1px solid ${intent.color}35">${intent.emoji} ${intent.label}</span><span style="color:var(--muted);font-size:12px">${fmtDuration(call.duration_seconds)} · ${fmtTime(call.created_at)}</span>`;
-  document.getElementById('modal-score').style.cssText=`width:38px;height:38px;border-radius:50%;border:2.5px solid ${col};color:${col};background:${col}12;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900`;
-  document.getElementById('modal-score').textContent=sc;
-  if(call.summary){document.getElementById('modal-summary').style.display='block';document.getElementById('modal-summary-text').textContent=call.summary}else document.getElementById('modal-summary').style.display='none';
-  const slots=call.slots||{},entries=Object.entries(slots).filter(([,v])=>v&&v!==false);
-  if(entries.length){document.getElementById('modal-slots').style.display='flex';document.getElementById('modal-slots').innerHTML=entries.map(([k,v])=>`<div class="slot-tag"><span class="slot-key">${esc(k)}: </span><span class="slot-val">${esc(v)}</span></div>`).join('')}else document.getElementById('modal-slots').style.display='none';
-  const msgs=(Array.isArray(call.transcript)?call.transcript:[]).filter(m=>m.role!=='system');
-  document.getElementById('modal-transcript').innerHTML=msgs.length?msgs.map(m=>{
-    const isBot=m.role==='bot';
-    return `<div class="msg"><div class="msg-avatar" style="background:${isBot?'rgba(200,168,75,.15)':'rgba(91,156,246,.15)'};border:1px solid ${isBot?'rgba(200,168,75,.3)':'rgba(91,156,246,.3)'};color:${isBot?'#c8a84b':'#5b9cf6'}">${isBot?'AI':'M'}</div><div class="msg-text">${esc(m.message||m.content||'')}</div></div>`;
-  }).join(''):'<div style="color:var(--muted);text-align:center;margin-top:20px;font-size:13px">Transkript yok.</div>';
-  document.getElementById('modal-overlay').classList.add('show');
+function renderLeads(){
+  let h=stats()+`<div class="table-card"><div class="table-header"><div class="title">🔥 Leadler</div></div><table><thead><tr><th>Müşteri</th><th>Telefon</th><th>Skor</th><th>Intent</th><th>Bölge</th><th>Oda</th><th>Bütçe</th><th>Uygun İlan</th><th>Özet</th></tr></thead><tbody>`;
+  allLeads.forEach(l=>{const m=matchProperties(l).length,col=scoreColor(l.lead_score||0);h+=`<tr><td>${esc(l.name||'Bilinmeyen')}</td><td>${esc(l.phone)}</td><td><span class="badge" style="background:${col}18;color:${col};border:1px solid ${col}35">${temp(l.temperature,l.lead_score)} · ${l.lead_score||0}</span></td><td>${esc(l.intent)}</td><td>${esc(l.district||'—')}</td><td>${esc(l.room_count||'—')}</td><td>${esc(l.budget||'—')}</td><td><button class="btn-detail" onclick="openLeadMatches('${l.id}')">${m} ilan</button></td><td><div class="summary-cell">${esc(l.summary||'—')}</div></td></tr>`});
+  document.getElementById('content').innerHTML=h+`</tbody></table></div>`;
 }
+
+function renderAppointments(){document.getElementById('content').innerHTML=appointmentsTable(allAppointments,'Randevular')}
+function appointmentsTable(rows,title){
+  let h=`<div class="table-card"><div class="table-header"><div class="title">📅 ${title}</div></div><table><thead><tr><th>Müşteri</th><th>Telefon</th><th>Tarih</th><th>Tip</th><th>Durum</th><th>Not</th></tr></thead><tbody>`;
+  rows.forEach(a=>h+=`<tr><td>${esc(a.client_name)}</td><td>${esc(a.client_phone)}</td><td>${a.scheduled_at?fmtDate(a.scheduled_at):'Tarih netleşmedi'}</td><td>${esc(a.appointment_type)}</td><td><span class="badge" style="background:#34c97e18;color:var(--green);border:1px solid #34c97e35">${esc(a.status)}</span></td><td><div class="summary-cell">${esc(a.notes)}</div></td></tr>`);
+  return h+`</tbody></table></div>`;
+}
+
+function renderProperties(){
+  let h=stats()+`<div class="table-card"><div class="table-header"><div class="title">🏠 Portföy</div></div><table><thead><tr><th>İlan</th><th>Tip</th><th>Bölge</th><th>Oda</th><th>m²</th><th>Fiyat</th><th>Durum</th><th>Açıklama</th></tr></thead><tbody>`;
+  allProperties.forEach(p=>h+=`<tr><td><b>${esc(p.title)}</b></td><td>${esc(p.listing_type)}</td><td>${esc([p.district,p.neighborhood].filter(Boolean).join(' / '))}</td><td>${esc(p.room_count)}</td><td>${p.square_meters||'—'}</td><td>${money(p.price)}</td><td><span class="badge" style="background:#34c97e18;color:var(--green);border:1px solid #34c97e35">${esc(p.status)}</span></td><td><div class="summary-cell">${esc(p.description)}</div></td></tr>`);
+  document.getElementById('content').innerHTML=h+`</tbody></table></div>`;
+}
+
+function matchProperties(l){
+  return allProperties.filter(p=>{
+    let score=0;
+    if(l.intent&&p.listing_type===l.intent)score+=3;
+    const area=((l.district||'')+' '+(p.district||'')+' '+(p.neighborhood||'')).toLowerCase();
+    if(l.district&&area.includes(String(l.district).toLowerCase().split(' ')[0]))score+=2;
+    if(l.room_count&&p.room_count===l.room_count)score+=2;
+    return score>=3;
+  }).slice(0,5);
+}
+function renderMatches(){
+  let h=stats()+`<div class="table-card"><div class="table-header"><div class="title">🎯 Lead - Portföy Eşleşmeleri</div></div>`;
+  allLeads.forEach(l=>{const ms=matchProperties(l);h+=`<div style="padding:18px 20px;border-bottom:1px solid var(--border)"><b>${esc(l.phone)} · ${esc(l.intent)} · ${l.lead_score||0}</b><div style="color:var(--muted);font-size:12px;margin-top:4px">${esc(l.summary||'')}</div><div style="margin-top:12px;display:grid;gap:8px">${ms.length?ms.map(p=>`<div style="background:var(--hover);border:1px solid var(--border);border-radius:10px;padding:12px"><b>${esc(p.title)}</b><div style="color:var(--muted);font-size:12px;margin-top:4px">${esc(p.neighborhood||p.district)} · ${esc(p.room_count)} · ${money(p.price)}</div></div>`).join(''):'<span style="color:var(--muted)">Uygun ilan bulunamadı.</span>'}</div></div>`});
+  document.getElementById('content').innerHTML=h+`</div>`;
+}
+
+function renderSettings(){document.getElementById('content').innerHTML=`<div class="table-card"><div class="table-header"><div class="title">⚙️ Ayarlar</div></div><div style="padding:22px;color:var(--muted)">Supabase: ${esc(SUPABASE_URL)}<br><br>Sonraki: SMS, tenant auth, Vapi prompt yönetimi.</div></div>`}
+
+function openCall(id){const c=allCalls.find(x=>x.id===id);if(!c)return;document.getElementById('modal-title').textContent=c.caller_phone||'Çağrı';document.getElementById('modal-meta').innerHTML=`${esc(c.intent)} · Skor ${c.lead_score||0}`;const msgs=(Array.isArray(c.transcript)?c.transcript:[]).filter(m=>m.role!=='system');document.getElementById('modal-body').innerHTML=`<p style="color:var(--muted);margin-bottom:16px">${esc(c.summary)}</p>`+msgs.map(m=>`<div class="msg"><div class="msg-avatar" style="background:${m.role==='bot'?'#c8a84b22':'#5b9cf622'};color:${m.role==='bot'?'var(--gold)':'var(--blue)'}">${m.role==='bot'?'AI':'M'}</div><div class="msg-text">${esc(m.message||m.content||'')}</div></div>`).join('');document.getElementById('modal-overlay').classList.add('show')}
+function openLeadMatches(id){const l=allLeads.find(x=>x.id===id),ms=matchProperties(l);document.getElementById('modal-title').textContent='Uygun İlanlar';document.getElementById('modal-meta').innerHTML=`${esc(l.phone)} · ${esc(l.intent)} · ${l.lead_score||0}`;document.getElementById('modal-body').innerHTML=ms.length?ms.map(p=>`<div style="background:var(--hover);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px"><b>${esc(p.title)}</b><div style="color:var(--muted);margin-top:5px">${esc(p.neighborhood||p.district)} · ${esc(p.room_count)} · ${money(p.price)}</div><p style="margin-top:8px;color:var(--muted);font-size:13px">${esc(p.description)}</p></div>`).join(''):'Uygun ilan yok.';document.getElementById('modal-overlay').classList.add('show')}
 function closeModal(){document.getElementById('modal-overlay').classList.remove('show')}
 
+window.addEventListener('load',()=>{const u=localStorage.getItem('ve_url'),k=localStorage.getItem('ve_key');if(u&&k){SUPABASE_URL=u;SUPABASE_KEY=k;showApp()}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
-window.addEventListener('load',()=>{
-  const url=localStorage.getItem('ve_url'),key=localStorage.getItem('ve_key');
-  if(url&&key){SUPABASE_URL=url;SUPABASE_KEY=key;showApp()}
-});
 </script>
 </body>
 </html>
