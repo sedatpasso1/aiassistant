@@ -94,23 +94,55 @@ async function upsertLead({ insertedCall, analysis }) {
     appointment_requested:
       analysis.slots?.appointment_requested || existing?.appointment_requested || false,
     summary: analysis.summary || existing?.summary || null,
-    status: analysis.temperature === 'hot' ? 'hot_lead' : existing?.status || 'new',
+    status: existing?.status || (analysis.temperature === 'hot' ? 'qualified' : 'new'),
     last_call_id: insertedCall.id,
     last_call_at: insertedCall.created_at,
     updated_at: new Date().toISOString(),
   };
 
   if (existing) {
-    await supabase
+    const { data } = await supabase
       .from('leads')
       .update({
         ...payload,
         call_count: (existing.call_count || 1) + 1,
       })
-      .eq('id', existing.id);
-  } else {
-    await supabase.from('leads').insert(payload);
+      .eq('id', existing.id)
+      .select()
+      .single();
+
+    return data;
   }
+
+  const { data } = await supabase
+    .from('leads')
+    .insert(payload)
+    .select()
+    .single();
+
+  return data;
+}
+
+async function createSmsDraft({ insertedCall, lead, appointment, analysis }) {
+  const phone = insertedCall.caller_phone;
+  if (!phone) return;
+
+  const when = analysis.slots?.preferred_time
+    ? new Date(analysis.slots.preferred_time).toLocaleString('tr-TR')
+    : 'randevu saatiniz netleştirilmek üzere';
+
+  const message = `Atlas Gayrimenkul: Talebiniz alındı. ${when}. Danışmanımız sizinle iletişime geçecektir.`;
+
+  await supabase.from('sms_logs').insert({
+    tenant_id: insertedCall.tenant_id || null,
+    call_id: insertedCall.id,
+    lead_id: lead?.id || null,
+    appointment_id: appointment?.id || null,
+    phone,
+    message,
+    provider: 'manual',
+    status: 'pending',
+  });
 }
 
 export default async function handler(req, res) {
@@ -235,29 +267,40 @@ ${transcriptText}
     });
   }
 
+  let lead = null;
+
   try {
-    await upsertLead({ insertedCall, analysis });
+    lead = await upsertLead({ insertedCall, analysis });
   } catch (e) {
     console.log('Lead upsert error:', e?.message || e);
   }
 
+  let appointment = null;
+
   if (analysis.slots?.appointment_requested && insertedCall) {
     try {
-      const { error } = await supabase.from('appointments').insert({
-        call_id: insertedCall.id,
-        tenant_id: insertedCall.tenant_id || null,
-        client_name: analysis.caller_name || 'Bilinmeyen Müşteri',
-        client_phone: insertedCall.caller_phone,
-        scheduled_at: analysis.slots?.preferred_time || null,
-        status: 'talep_alindi',
-        appointment_type: analysis.intent,
-        notes: analysis.summary,
-        source: 'ai_call',
-      });
+      const { data, error } = await supabase
+        .from('appointments')
+        .insert({
+          call_id: insertedCall.id,
+          tenant_id: insertedCall.tenant_id || null,
+          client_name: analysis.caller_name || 'Bilinmeyen Müşteri',
+          client_phone: insertedCall.caller_phone,
+          scheduled_at: analysis.slots?.preferred_time || null,
+          status: 'talep_alindi',
+          appointment_type: analysis.intent,
+          notes: analysis.summary,
+          source: 'ai_call',
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+      appointment = data;
+
+      await createSmsDraft({ insertedCall, lead, appointment, analysis });
     } catch (e) {
-      console.log('Supabase appointments insert error:', e?.message || e);
+      console.log('Supabase appointments/sms insert error:', e?.message || e);
     }
   }
 
@@ -273,6 +316,8 @@ ${transcriptText}
   return res.status(200).json({
     success: true,
     call_id: insertedCall?.id,
+    lead_id: lead?.id || null,
+    appointment_id: appointment?.id || null,
     analysis,
   });
 }
