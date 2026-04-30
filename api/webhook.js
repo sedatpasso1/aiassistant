@@ -45,7 +45,6 @@ function temperatureFromScore(score) {
 
 function normalizeAnalysis(raw) {
   const score = Number(raw?.lead_score);
-
   const cleanScore = Number.isFinite(score)
     ? Math.max(0, Math.min(100, score))
     : 30;
@@ -84,17 +83,18 @@ async function upsertLead({ insertedCall, analysis }) {
     tenant_id: insertedCall.tenant_id || null,
     phone,
     name: analysis.caller_name || existing?.name || null,
-    intent: analysis.intent,
+    intent: analysis.intent || existing?.intent || 'BILGI',
     lead_score: analysis.lead_score,
     temperature: analysis.temperature,
-    district: analysis.slots?.district,
-    room_count: analysis.slots?.room_count,
-    budget: analysis.slots?.budget,
-    property_type: analysis.slots?.property_type,
-    urgency: analysis.slots?.urgency,
-    appointment_requested: analysis.slots?.appointment_requested,
-    summary: analysis.summary,
-    status: analysis.temperature === 'hot' ? 'hot_lead' : 'new',
+    district: analysis.slots?.district || existing?.district || null,
+    room_count: analysis.slots?.room_count || existing?.room_count || null,
+    budget: analysis.slots?.budget || existing?.budget || null,
+    property_type: analysis.slots?.property_type || existing?.property_type || null,
+    urgency: analysis.slots?.urgency || existing?.urgency || null,
+    appointment_requested:
+      analysis.slots?.appointment_requested || existing?.appointment_requested || false,
+    summary: analysis.summary || existing?.summary || null,
+    status: analysis.temperature === 'hot' ? 'hot_lead' : existing?.status || 'new',
     last_call_id: insertedCall.id,
     last_call_at: insertedCall.created_at,
     updated_at: new Date().toISOString(),
@@ -228,7 +228,6 @@ ${transcriptText}
     insertedCall = data;
   } catch (e) {
     console.log('Supabase calls insert error:', e?.message || e);
-
     return res.status(500).json({
       success: false,
       error: 'calls_insert_failed',
